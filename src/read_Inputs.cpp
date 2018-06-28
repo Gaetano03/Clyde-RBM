@@ -29,7 +29,7 @@ keywords read_keyword_type( const std::string &key_string )
 }
 
 
-void CConfig::Read_cfg ( const std::string filename )
+void Read_cfg ( const std::string filename, prob_settings &settings )
 {
 
     
@@ -55,49 +55,49 @@ void CConfig::Read_cfg ( const std::string filename )
 
                 case PROB_DIM:
                 {
-                    m_settings.dim_prob = value;
+                    settings.dim_prob = value;
                     std::cout << "Problem dimension : " << value << std::endl;
                     break;
                 }
 
                 case NS:
                 {
-                    m_settings.Ns = std::stoi(value);
+                    settings.Ns = std::stoi(value);
                     std::cout << "Number of snapshots : " << value << std::endl;
                     break;
                 }
 
                 case DS:
                 {
-                    m_settings.Ds = std::stod(value);
+                    settings.Ds = std::stod(value);
                     std::cout << "Delta between selected snapshots (Equispaced) : " << value << std::endl; 
                     break;
                 }
 
                 case EN:
                 {
-                    m_settings.En = std::stod(value);
+                    settings.En = std::stod(value);
                     std::cout << "Energy content used in the reconstruction : " << value << std::endl;
                     break;
                 }
 
                 case INPUT_FILE_ROOT:
                 {
-                    m_settings.in_file_root = value;
+                    settings.in_file_root = value;
                     std::cout << "Input file root name : " << value << std::endl;
                     break;
                 }
 
                 case INPUT_FILE_FORMAT:
                 {
-                    m_settings.in_file_format = value;
+                    settings.in_file_format = value;
                     std::cout << "Input file format : " << value << std::endl;
                     break;
                 }
 
                 case NF:
                 {
-                    m_settings.Nf = std::stoi(value);
+                    settings.Nf = std::stoi(value);
                     std::cout << "Filter size for feature extraction : " << value << std::endl;
                     break;
                 }
@@ -111,7 +111,7 @@ void CConfig::Read_cfg ( const std::string filename )
 
                     while ( ss >> i ) {
 
-                        m_settings.Cols.push_back(i);
+                        settings.Cols.push_back(i);
 
                         if (ss.peek() != ',' || ss.peek() != ' ')
                             ss.ignore();
@@ -120,8 +120,8 @@ void CConfig::Read_cfg ( const std::string filename )
 
                     std::cout << "Number of columns to process: \t";
                     
-                    for ( i = 0; i < m_settings.Cols.size(); i++ )
-                        std::cout << m_settings.Cols[i] << "\t";
+                    for ( i = 0; i < settings.Cols.size(); i++ )
+                        std::cout << settings.Cols[i] << "\t";
 
                     std::cout << std::endl;
 
@@ -187,13 +187,12 @@ int N_gridpoints( const std::string file_in) {
 
 
 
-Eigen::MatrixXd read_col( std::string filename, int Nr, std::vector<int> Cols )
+Eigen::MatrixXd read_col( std::string filename, int Nr, std::vector<int> Cols, Eigen::MatrixXd &field )
 {
 
 
     std::ifstream flow_data;
     flow_data.open( filename );    
-    Eigen::MatrixXd field (Nr, Cols.size());
 
     if ( !flow_data.is_open() )
     {

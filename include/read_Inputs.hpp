@@ -48,7 +48,7 @@ keywords read_keyword_type( const std::string &key_string );
 
 
 // Read config file and store info in prob_settings
-void Read_cfg ( prob_settings &settings );
+void Read_cfg ( std::string filename, prob_settings &settings );
 
 
 //Get Number of grid points
@@ -56,7 +56,7 @@ int N_gridpoints ( const std::string file_in );
 
 
 // Get fields on the specified columns 
-Eigen::MatrixXd read_col( std::string filename );
+Eigen::MatrixXd read_col( std::string filename, int Nr, std::vector<int> Cols, Eigen::MatrixXd &field );
 
 
 #endif //READ_INPUTS_HPP

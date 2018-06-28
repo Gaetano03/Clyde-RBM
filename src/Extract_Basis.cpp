@@ -36,8 +36,8 @@ void eig_sort( Eigen::VectorXd &lam, Eigen::MatrixXd &eig_vec ) {
 
 
 
-Eigen::MatrixXd SPOD_basis( const Eigen::MatrixXd &snap_set,
-                                const int Ns, const int Nr,     
+Eigen::MatrixXd SPOD_basis( Eigen::MatrixXd snap_set,
+                                const int Nf,    
                                 std::string bc_flag , 
                                 std::string filter_flag , 
                                 std::string meanflag , 
@@ -45,6 +45,8 @@ Eigen::MatrixXd SPOD_basis( const Eigen::MatrixXd &snap_set,
                                 {
 
                                     int count;
+                                    int Nr = snap_set.rows();
+                                    int Ns = snap_set.cols();
 
                                     Eigen::MatrixXd R_f(Ns, Ns);
                                     Eigen::MatrixXd phi_c(Nr, Ns);
@@ -130,6 +132,7 @@ Eigen::MatrixXd SPOD_basis( const Eigen::MatrixXd &snap_set,
                                     eig_sort( lam, eig_vec);
 
                                     double sum = 0;
+                                    Eigen::VectorXd K_pc(Ns);
 
                                     for (int i = 0; i < Ns; i++){
                                         sum += lam(i)/lam.sum();

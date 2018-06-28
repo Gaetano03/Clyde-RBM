@@ -18,7 +18,7 @@
 
 
 Eigen::MatrixXd SPOD_basis( const Eigen::MatrixXd snap_set,
-                                const int Ns, const int Nr,
+                                const int Nf,
                                 std::string bc_flag = "ZERO", 
                                 std::string filter_flag = "BOX", 
                                 std::string meanflag = "YES", 
