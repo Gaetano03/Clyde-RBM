@@ -379,7 +379,7 @@ void write_modes_DMD ( const Eigen::MatrixXcd &Phi_cut,
                                     }
 
                                 flow_dataI << std::endl;
-                                flow_dataD << std::endl;
+                                flow_dataR << std::endl;
 
                                 }
                             // Close file
@@ -450,7 +450,8 @@ void write_TimeDynamics_DMD ( const Eigen::VectorXcd omega,
                             const Eigen::VectorXcd alfa,
                             const Eigen::VectorXd t)
                             {
-
+                                
+                                std::string filename = "TimeDynamics_DMD.dat";
                                 std::ofstream flow_data;
                                 flow_data.open(filename);
 

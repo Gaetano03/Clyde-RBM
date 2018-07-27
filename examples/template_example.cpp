@@ -131,6 +131,15 @@ int main(int argc, char *argv[]) {
     {
 
 
+        Eigen::VectorXd t_vec( settings.Ns );
+        t_vec(0) = 0.0;
+
+        for ( int i = 1; i < settings.Ns; i++ )
+            t_vec(i) = t_vec(i-1) + settings.Dt_cfd*settings.Ds;
+
+        std::cout << std::endl;
+        std::cout << "Initialized vector of times " << std::endl;
+
         Eigen::VectorXd lambda_POD(settings.Ns - 1);
         Eigen::VectorXd K_pc(settings.Ns - 1);
         Eigen::MatrixXd eig_vec_POD(settings.Ns - 1, settings.Ns - 1);
@@ -176,8 +185,12 @@ int main(int argc, char *argv[]) {
             write_modes_DMD ( Phi, Coords, settings.flag_prob );
             std::cout << "Complete!" << std::endl;
 
+            Eigen::VectorXcd omega(Nm);
+            for ( int i = 0; i < Nm; i++ )
+                 omega(i) = std::log(lambda_DMD(i))/(settings.Dt_cfd*settings.Ds);
+
             std::cout << "Writing time dynamics ..." << "\t";
-            write_TimeDynamics_DMD ( lambda_DMD, alfa, t_vec );
+            write_TimeDynamics_DMD ( omega, alfa, t_vec );
             std::cout << "Complete!" << std::endl;
             std::cout << std::endl;
 
