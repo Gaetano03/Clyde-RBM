@@ -10,16 +10,40 @@ keywords read_keyword_type( const std::string &key_string )
         return DS;
     else if( key_string == "EN" )
         return EN;
-    else if( key_string == "PROB_DIM" )
-        return PROB_DIM;
-    else if( key_string == "INPUT_FILE_ROOT" )
-        return INPUT_FILE_ROOT;
-    else if( key_string == "INPUT_FILE_FORMAT" )
-        return INPUT_FILE_FORMAT;
+    else if( key_string == "SIGMA" )
+        return SIGMA;
+    else if( key_string == "DT_CFD" )
+        return DT_CFD;
+    else if( key_string == "FLAG_DIM" )
+        return FLAG_DIM;
+    else if( key_string == "FLAG_PROB" )
+        return FLAG_PROB;
+    else if( key_string == "INPUT_FILE" )
+        return INPUT_FILE;
+    else if( key_string == "OUTPUT_FILE" )
+        return OUTPUT_FILE;
     else if( key_string == "NF" )
         return NF;
+    else if( key_string == "COLS_COORDS" )
+        return COLS_COORDS;
     else if( key_string == "COLS_FIELDS" )
         return COLS_FIELDS;
+    else if( key_string == "FLAG_METHOD" )
+        return FLAG_METHOD;
+    else if( key_string == "FLAG_MEAN" )
+        return FLAG_MEAN;
+    else if( key_string == "FLAG_BC" )
+        return FLAG_BC;
+    else if( key_string == "FLAG_FILTER" )
+        return FLAG_FILTER;
+    else if( key_string == "FLAG_WDB_BE" )
+        return FLAG_WDB_BE;
+    else if( key_string == "FLAG_REC" )
+        return FLAG_REC;
+    else if( key_string == "FLAG_INTERP" )
+        return FLAG_INTERP;
+    else if( key_string == "T_REC" )
+        return T_REC;
     else
     {
         std::cout << "Something wrong in cfg file" << std::endl;
@@ -34,7 +58,8 @@ void Read_cfg ( const std::string filename, prob_settings &settings )
 
     
     std::ifstream cFile ( filename );
-    if ( cFile.is_open() ){
+    if ( cFile.is_open() )
+    {
 
         size_t delimiterPos; 
         std::string name, value;
@@ -53,10 +78,17 @@ void Read_cfg ( const std::string filename, prob_settings &settings )
             switch (read_keyword_type(name))
             {
 
-                case PROB_DIM:
+                case FLAG_PROB:
                 {
-                    settings.dim_prob = value;
-                    std::cout << "Problem dimension : " << value << std::endl;
+                    settings.flag_prob = value;
+                    std::cout << "Problem flag : " << value << std::endl;
+                    break;
+                }
+
+                case FLAG_DIM:
+                {
+                    settings.flag_dim = value;
+                    std::cout << "Dimension flag : " << value << std::endl;
                     break;
                 }
 
@@ -81,17 +113,31 @@ void Read_cfg ( const std::string filename, prob_settings &settings )
                     break;
                 }
 
-                case INPUT_FILE_ROOT:
+                case SIGMA:
                 {
-                    settings.in_file_root = value;
-                    std::cout << "Input file root name : " << value << std::endl;
+                    settings.sigma = std::stod(value);
+                    std::cout << "Sigma for SPOD gaussian filter : " << value << std::endl;
                     break;
                 }
 
-                case INPUT_FILE_FORMAT:
+                case DT_CFD:
                 {
-                    settings.in_file_format = value;
-                    std::cout << "Input file format : " << value << std::endl;
+                    settings.Dt_cfd = std::stod(value);
+                    std::cout << "Dt used in CFD simulation : " << value << std::endl;
+                    break;
+                }
+
+                case INPUT_FILE:
+                {
+                    settings.in_file = value;
+                    std::cout << "Input file root name and format : " << value << std::endl;
+                    break;
+                }
+
+                case OUTPUT_FILE:
+                {
+                    settings.out_file = value;
+                    std::cout << "Output file root name and format : " << value << std::endl;
                     break;
                 }
 
@@ -99,6 +145,88 @@ void Read_cfg ( const std::string filename, prob_settings &settings )
                 {
                     settings.Nf = std::stoi(value);
                     std::cout << "Filter size for feature extraction : " << value << std::endl;
+                    break;
+                }
+
+                case FLAG_METHOD:
+                {
+                    settings.flag_method = value;
+                    std::cout << "Method for feature extraction : " << value << std::endl;
+                    break;
+                }
+
+                case FLAG_MEAN:
+                {
+                    settings.flag_mean = value;
+                    std::cout << "Mean subtraction : " << value << std::endl;
+                    break;
+                }
+
+                case FLAG_BC:
+                {
+                    settings.flag_bc = value;
+                    std::cout << "Boundary consition for correlation matrix : " << value << std::endl;
+                    break;
+                }
+
+                case FLAG_FILTER:
+                {
+                    settings.flag_filter = value;
+                    std::cout << "Filter type for SPOD : " << value << std::endl;
+                    break;
+                }
+
+                case FLAG_WDB_BE:
+                {
+                    settings.flag_wdb_be = value;
+                    std::cout << "Write database basis extraction (modes and coefficients) : " << value << std::endl;
+                    break;
+                }
+
+                case FLAG_REC:
+                {
+                    settings.flag_rec = value;
+                    std::cout << "Compute reconstructed field : " << value << std::endl;
+                    break;
+                }
+
+                case FLAG_INTERP:
+                {
+                    settings.flag_interp = value;
+                    std::cout << "Interpolation technique for rbf : " << value << std::endl;
+                    break;
+                }
+
+                case T_REC:
+                {
+                    settings.t_rec = stod(value);
+                    std::cout << "Time desired for reconstruction : " << value << std::endl;
+                    break;
+                }
+
+                case COLS_COORDS:
+                {
+                    std::string str = value;
+                    std::stringstream ss(str);
+
+                    int i;
+
+                    while ( ss >> i ) {
+
+                        settings.Cols_coords.push_back(i);
+
+                        if (ss.peek() != ',' || ss.peek() != ' ')
+                            ss.ignore();
+
+                    }
+
+                    std::cout << "Number of columns with coordinates: \t";
+                    
+                    for ( i = 0; i < settings.Cols_coords.size(); i++ )
+                        std::cout << settings.Cols_coords[i] << "\t";
+
+                    std::cout << std::endl;
+
                     break;
                 }
 
@@ -159,7 +287,7 @@ int N_gridpoints( const std::string file_in) {
     {
 
         std::cout << " While getting number of grid points, \nFile: " 
-            << file_in << " not found" << std::endl;
+            << file_in << " not found " << std::endl;
         exit (EXIT_FAILURE);
 
     }
@@ -170,7 +298,7 @@ int N_gridpoints( const std::string file_in) {
     while(getline( flow_data, line_flow_data )) 
     {
            
-        if ( line_flow_data.compare(0,1,"A") == 0 ) //if reading SU2 native restart file
+        if ( line_flow_data.compare(0,1,"E") == 0 ) //if reading SU2 native restart file
             break;
             
         n_row++;
@@ -186,11 +314,11 @@ int N_gridpoints( const std::string file_in) {
 
 
 
-
-Eigen::MatrixXd read_col( std::string filename, int Nr, std::vector<int> Cols, Eigen::MatrixXd &field )
+Eigen::MatrixXd read_col( std::string filename, int Nr, std::vector<int> Cols )
 {
 
 
+    Eigen::MatrixXd field (Nr, Cols.size());
     std::ifstream flow_data;
     flow_data.open( filename );    
 
@@ -247,7 +375,7 @@ Eigen::MatrixXd read_col( std::string filename, int Nr, std::vector<int> Cols, E
             while( getline( iss, token, '\t') )
             {
 
-                if ( token.compare(0,1,"A") == 0 ) //if reading SU2 restart file
+                if ( token.compare(0,1,"E") == 0 ) //if reading SU2 restart file
                     break;
 
                 rubbish = std::stold(token);
@@ -277,7 +405,7 @@ Eigen::MatrixXd read_col( std::string filename, int Nr, std::vector<int> Cols, E
             exit (EXIT_FAILURE);
         }
 
-        if ( token.compare(0,1,"A") == 0 ) //if reading SU2 restart file
+        if ( token.compare(0,1,"E") == 0 ) //if reading SU2 restart file
             break;
 
         field.row(n_row) = point; 

@@ -6,10 +6,8 @@
 
 Eigen::MatrixXd generate_snap_matrix( const int Nr, const int Ns, const int ds,
                                         std::vector<int> Cols,
-                                        std::string root_inputfile,
-                                        std::string input_format,
-                                        std::string flag_prob = "VELOCITY", 
-                                        std::string flag_dim = "2D");
+                                        std::string inputfile,
+                                        std::string flag_prob = "VELOCITY-2D");
 
 
 

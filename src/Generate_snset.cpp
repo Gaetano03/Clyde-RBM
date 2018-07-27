@@ -3,157 +3,137 @@
 
 Eigen::MatrixXd generate_snap_matrix( const int Nr, const int Ns, const int ds,
                                         std::vector<int> Cols,
-                                        std::string root_inputfile,
-                                        std::string input_format,
-                                        std::string flag_prob, 
-                                        std::string flag_dim )
+                                        std::string inputfile,
+                                        std::string flag_prob )
 {
 
     Eigen::MatrixXd field(Nr, Cols.size());
     std::string file_temp;
     int k = 0;
+                                        
+    std::string root_inputfile;
+    root_inputfile.assign ( inputfile, 0, inputfile.size() - 4);
+    std::string input_format;
+    input_format.assign ( inputfile, inputfile.size() - 3, 3);
+    
 
-    if ( flag_prob == "VECTOR")
+    if ( flag_prob == "VECTOR-2D")
     {
+    
+        Eigen::MatrixXd snap(2*Nr, Ns);
 
-        if ( flag_dim == "2D"){
-            
-            Eigen::MatrixXd snap(2*Nr, Ns);
-
-            for( int i = 0; i < Ns*ds; i += ds )
-            {
-
-                std::stringstream buffer;
-                buffer << std::setfill('0') << std::setw(5) << std::to_string(i);
-                file_temp = root_inputfile + buffer.str() + input_format;
-                std::cout << "Reading fields from : " << file_temp << "\t";
-                field = read_col(file_temp, Nr, Cols, field);
-                std::cout << "Complete!" << std::endl;
-
-                Eigen::VectorXd gx = field.col(1);
-                Eigen::VectorXd gy = field.col(2);
-
-                snap.col(k) << gx,
-                                gy;
-                
-                k++;
-            }
-
-            return snap;
-
-        } else if ( flag_dim == "3D")
+        for( int i = 0; i < Ns*ds; i += ds )
         {
 
-            Eigen::MatrixXd snap(3*Nr, Ns);
+            std::stringstream buffer;
+            buffer << std::setfill('0') << std::setw(5) << std::to_string(i);
+            file_temp = root_inputfile + "_" + buffer.str() + "." + input_format;
+            std::cout << "Reading fields from : " << file_temp << "\t";
+            field = read_col(file_temp, Nr, Cols);
+            std::cout << "Complete!" << std::endl;
 
-            for( int i = 0; i < Ns*ds; i += ds )
-            {
+            Eigen::VectorXd gx = field.col(1);
+            Eigen::VectorXd gy = field.col(2);
 
-                std::stringstream buffer;
-                buffer << std::setfill('0') << std::setw(5) << std::to_string(i);
-                file_temp = root_inputfile + buffer.str() + input_format;
-                std::cout << "Reading fields from : " << file_temp << "\t";
-                field = read_col(file_temp, Nr, Cols, field);
-                std::cout << "Complete!" << std::endl;
-
-                Eigen::VectorXd gx = field.col(1);
-                Eigen::VectorXd gy = field.col(2);
-                Eigen::VectorXd gz = field.col(3);
-
-                snap.col(k) << gx,
-                                gy,
-                                gz;
-
-                k++;
-
-            }   
+            snap.col(k) << gx,
+                            gy;
+            
+            k++;
+        }
 
         return snap;
 
-        } else 
-        {
-
-            std::cout << " Set well problem dimension! Exiting ... " << std::endl;
-            exit (EXIT_FAILURE);
-            
-        } 
-
-
-    } else if ( flag_prob == "VELOCITY" ) 
+    } else if ( flag_prob == "VECTOR-3D")
     {
 
+        Eigen::MatrixXd snap(3*Nr, Ns);
 
-        if ( flag_dim == "2D" )
+        for( int i = 0; i < Ns*ds; i += ds )
         {
 
-            Eigen::MatrixXd snap(2*Nr, Ns);
+            std::stringstream buffer;
+            buffer << std::setfill('0') << std::setw(5) << std::to_string(i);
+            file_temp = root_inputfile + "_" + buffer.str() + "." + input_format;
+            std::cout << "Reading fields from : " << file_temp << "\t";
+            field = read_col(file_temp, Nr, Cols);
+            std::cout << "Complete!" << std::endl;
 
+            Eigen::VectorXd gx = field.col(1);
+            Eigen::VectorXd gy = field.col(2);
+            Eigen::VectorXd gz = field.col(3);
 
-            for( int i = 0; i < Ns*ds; i += ds )
-            {
+            snap.col(k) << gx,
+                            gy,
+                            gz;
 
-                std::stringstream buffer;
-                buffer << std::setfill('0') << std::setw(5) << std::to_string(i);
-                file_temp = root_inputfile + buffer.str() + input_format;
-                std::cout << "Reading fields from : " << file_temp << "\t";
-                field = read_col(file_temp, Nr, Cols, field);
-                std::cout << "Complete!" << std::endl;
+            k++;
 
-                Eigen::VectorXd rho = field.col(0);
-                Eigen::VectorXd rho_u = field.col(1);
-                Eigen::VectorXd rho_v = field.col(2);
-                Eigen::VectorXd u = rho_u.cwiseQuotient(rho);
-                Eigen::VectorXd v = rho_v.cwiseQuotient(rho);
-
-                snap.col(k) << u,
-                                v;
-                
-                k++;
-            }
-
-            return snap;
-
-        } else if ( flag_dim == "3D" )
-        {
-
-            Eigen::MatrixXd snap(3*Nr, Ns);
-
-            for( int i = 0; i < Ns*ds; i += ds )
-            {
-
-                std::stringstream buffer;
-                buffer << std::setfill('0') << std::setw(5) << std::to_string(i);
-                file_temp = root_inputfile + buffer.str() + input_format;
-                std::cout << "Reading fields from : " << file_temp << "\t";
-                field = read_col(file_temp, Nr, Cols, field);
-                std::cout << "Complete!" << std::endl;
-
-                Eigen::VectorXd rho = field.col(0);
-                Eigen::VectorXd rho_u = field.col(1);
-                Eigen::VectorXd rho_v = field.col(2);
-                Eigen::VectorXd rho_w = field.col(3);
-                Eigen::VectorXd u = rho_u.cwiseQuotient(rho);
-                Eigen::VectorXd v = rho_v.cwiseQuotient(rho);
-                Eigen::VectorXd w = rho_w.cwiseQuotient(rho);
-
-                snap.col(k) << u,
-                                v,
-                                w;
-
-                k++;
-
-            }
+        }   
 
         return snap;
 
-        } else 
+    } else if ( flag_prob == "VELOCITY-2D" ) 
+    {
+
+        Eigen::MatrixXd snap(2*Nr, Ns);
+
+        for( int i = 0; i < Ns*ds; i += ds )
         {
+
+            std::stringstream buffer;
+            buffer << std::setfill('0') << std::setw(5) << std::to_string(i);
+            file_temp = root_inputfile + "_" + buffer.str() + "." + input_format;
+            std::cout << "Reading fields from : " << file_temp << "\t";
+            field = read_col(file_temp, Nr, Cols);
+            std::cout << "Complete!" << std::endl;
+
+            Eigen::VectorXd rho = field.col(0);
+            Eigen::VectorXd rho_u = field.col(1);
+            Eigen::VectorXd rho_v = field.col(2);
+            Eigen::VectorXd u = rho_u.cwiseQuotient(rho);
+            Eigen::VectorXd v = rho_v.cwiseQuotient(rho);
+
+            snap.col(k) << u,
+                            v;
             
-            std::cout << " Set well problem dimension! Exiting ... " << std::endl;
-            exit (EXIT_FAILURE);            
+            k++;
+        }
+
+        return snap;
+
+    } else if ( flag_prob == "VELOCITY-3D" )
+    {
+
+        Eigen::MatrixXd snap(3*Nr, Ns);
+
+        for( int i = 0; i < Ns*ds; i += ds )
+        {
+
+            std::stringstream buffer;
+            buffer << std::setfill('0') << std::setw(5) << std::to_string(i);
+            file_temp = root_inputfile + "_" + buffer.str() + "." + input_format;
+            std::cout << "Reading fields from : " << file_temp << "\t";
+            field = read_col(file_temp, Nr, Cols);
+            std::cout << "Complete!" << std::endl;
+
+            Eigen::VectorXd rho = field.col(0);
+            Eigen::VectorXd rho_u = field.col(1);
+            Eigen::VectorXd rho_v = field.col(2);
+            Eigen::VectorXd rho_w = field.col(3);
+            Eigen::VectorXd u = rho_u.cwiseQuotient(rho);
+            Eigen::VectorXd v = rho_v.cwiseQuotient(rho);
+            Eigen::VectorXd w = rho_w.cwiseQuotient(rho);
+
+            snap.col(k) << u,
+                            v,
+                            w;
+
+            k++;
 
         }
-    
+
+        return snap;
+
     } else if ( flag_prob == "SCALAR" )
     {
 
@@ -164,9 +144,9 @@ Eigen::MatrixXd generate_snap_matrix( const int Nr, const int Ns, const int ds,
 
                 std::stringstream buffer;
                 buffer << std::setfill('0') << std::setw(5) << std::to_string(i);
-                file_temp = root_inputfile + buffer.str() + input_format;
+                file_temp = root_inputfile + "_" + buffer.str() + "." + input_format;
                 std::cout << "Reading fields from : " << file_temp << "\t";
-                field = read_col(file_temp, Nr, Cols, field);
+                field = read_col(file_temp, Nr, Cols);
                 std::cout << "Complete!" << std::endl;
 
                 snap.col(k) = field.col(0);
@@ -177,6 +157,11 @@ Eigen::MatrixXd generate_snap_matrix( const int Nr, const int Ns, const int ds,
 
         return snap;
 
+
+    } else {
+
+        std::cout << "Set well flag_prob! Now Exiting ..." << std::endl;
+        exit (EXIT_FAILURE);
 
     }
 

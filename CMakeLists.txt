@@ -54,7 +54,7 @@ set (INCLUDE_PATH                                "${PROJECT_PATH}/src/")
 option(BUILD_STATIC        "Build static library"     OFF)
 option(BUILD_EXAMPLES      "Build examples"           ON)
 option(ENABLE_SMARTMATH    "MATH methods"             ON)
-option(ENABLE_SMARTUQ      "UQ methods"               OFF)
+option(ENABLE_SMARTUQ      "UQ methods"               ON)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 

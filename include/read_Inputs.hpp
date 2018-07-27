@@ -18,17 +18,35 @@
 struct prob_settings 
 {
 
-    int Ns;
-    int Nf;
-    double En;
-    double Ds;
-    std::string in_file_root;
-    std::string in_file_format;
-    std::string out_file;
-    std::string dim_prob;
-    std::string flag_filter;
-    std::string flag_mean;
-    std::vector<int> Cols;
+    //-----Definition of general variables--------
+    int Ns;                         //Number of snapshots
+    int Ds;                         //Delta between snapshots
+    std::string in_file;            //Input filename
+    std::string out_file;           //Output filename (for reconstruction)
+    std::string flag_dim;           //Problem dimension (2D/3D)
+    std::string flag_prob;          //Type of problem (Vector, scalar)
+    std::vector<int> Cols;          //Fields columns to porcess
+    std::vector<int> Cols_coords;   //Columns with coordinates 
+    std::string flag_method;        //Method to use
+    std::string flag_wdb_be;        //flag write database basis ectraction( modes and coefficients)
+    double Dt_cfd;                  //delta t used in CFD simulation
+
+
+    //------Parameter for POD-SPOD---------
+    int Nf;                     //filter size for SPOD
+    double En;                  //Energetic content desired for reconstruction
+    
+    double sigma;               //sigma value in case of Gaussian filter
+    std::string flag_filter;    //SPOD filter type
+    std::string flag_mean;      //Subtract mean (ON/OFF), flag
+    std::string flag_bc;        /*Type of boundary condition
+                                    for correlation matrix, flag*/
+
+
+    //----Parameter for Reconstruction---------
+    std::string flag_rec;           //Activate-deactivate field reconstruction 
+    std::string flag_interp;        //Interpolation technique for rbf
+    double t_rec;                   //time desired for reconstruction
 
 };
 
@@ -36,10 +54,23 @@ struct prob_settings
 // List of Keywords in config file
 enum keywords 
             { 
-                NS, DS, EN, PROB_DIM, NF, 
-                INPUT_FILE_ROOT, 
-                INPUT_FILE_FORMAT, 
-                COLS_FIELDS 
+                NS, DS, EN, NF, SIGMA,
+                DT_CFD,
+                FLAG_DIM,
+                FLAG_PROB,
+                FLAG_METHOD, 
+                INPUT_FILE,
+                OUTPUT_FILE, 
+                COLS_COORDS,
+                COLS_FIELDS,
+                FLAG_MEAN,
+                FLAG_BC,
+                FLAG_FILTER,
+                FLAG_WDB_BE,
+                FLAG_REC,
+                FLAG_INTERP,
+                T_REC
+
             };
 
 
@@ -56,7 +87,7 @@ int N_gridpoints ( const std::string file_in );
 
 
 // Get fields on the specified columns 
-Eigen::MatrixXd read_col( std::string filename, int Nr, std::vector<int> Cols, Eigen::MatrixXd &field );
+Eigen::MatrixXd read_col( std::string filename, int Nr, std::vector<int> Cols );
 
 
 #endif //READ_INPUTS_HPP
