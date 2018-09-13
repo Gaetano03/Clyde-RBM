@@ -32,12 +32,6 @@ Eigen::MatrixXd Reconstruction_S_POD ( const std::vector<double> &t_vec,
                                 std::string flag_interp = "LINEAR");
 
 
-Eigen::VectorXcd Calculate_Coefs_DMD ( const Eigen::MatrixXcd &eig_vec,
-                                    const Eigen::MatrixXcd &eig_vec_POD,
-                                    const Eigen::VectorXcd &lam,
-                                    const Eigen::VectorXcd &lam_POD,
-                                    const int Nm );
-
 Eigen::MatrixXcd Reconstruction_DMD ( const double time, const double dt, 
                                     const Eigen::VectorXcd &alfa,
                                     const Eigen::MatrixXcd &Phi,
@@ -50,6 +44,14 @@ Eigen::MatrixXcd TimeEvo_DMD ( Eigen::VectorXd &time,
                             const Eigen::MatrixXcd &Phi,
                             const Eigen::VectorXcd &lam );
  
+
+void nodes_mrDMD_sort( std::vector<node_mrDMD> &nodes ); //Sorting nodes in ordered levels
+
+
+Eigen::MatrixXcd Reconstruction_mrDMD ( const double time,                      //time desired for reconstruction                                                                                                                                                                                                                                                                                                                              
+                                    const double dts,                           //time between initial set of snapshots
+                                    const std::vector<node_mrDMD> &nodes,       //nodes
+                                    const std::string flag_prob );              
 
 #endif // RECONSTRUCTION_HPP
 

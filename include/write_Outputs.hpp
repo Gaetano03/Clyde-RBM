@@ -29,10 +29,16 @@ void write_TimeDynamics_DMD ( const Eigen::VectorXcd omega,
                             const Eigen::VectorXcd alfa,
                             const Eigen::VectorXd t);
 
+void write_CoefsDynamics_mrDMD( std::vector<node_mrDMD> &nodes, 
+                                const int level, 
+                                const int ns, 
+                                const int max_levels );
+
 void write_Reconstructed_fields ( const Eigen::MatrixXd Rec,
                                     const Eigen::MatrixXd &Coords,
                                     std::string filename,
-                                    std::string flag_prob );
+                                    std::string flag_prob,
+                                    const int nt );
 
 
 

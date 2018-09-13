@@ -95,32 +95,36 @@ int main(int argc, char *argv[]) {
         if ( settings.flag_rec == "YES" )
         {
 
-            std::cout << "Reconstructing field at time : " << settings.t_rec << "\t";
-
-            Eigen::MatrixXd Rec = Reconstruction_S_POD ( t_vec,
-                                K_pc, lambda, eig_vec.transpose(),
-                                Phi, settings.t_rec,
-                                settings.En,
-                                settings.flag_prob,
-                                settings.flag_interp ) ;
-
-            std::cout << "Done" << std::endl;
-
-            if ( settings.flag_mean == "YES" )
+            for ( int nt = 0; nt < settings.t_rec.size(); nt++ )
             {
 
-                for ( int i = 0; i < Rec.cols(); i++)
-                    Rec.col(i) = Rec.col(i) + mean.segment(i*Nr, Nr);
+                std::cout << "Reconstructing field at time : " << settings.t_rec[nt] << "\t";
 
+                Eigen::MatrixXd Rec = Reconstruction_S_POD ( t_vec,
+                                    K_pc, lambda, eig_vec.transpose(),
+                                    Phi, settings.t_rec[nt],
+                                    settings.En,
+                                    settings.flag_prob,
+                                    settings.flag_interp ) ;
+
+                std::cout << "Done" << std::endl;
+
+                if ( settings.flag_mean == "YES" )
+                {
+
+                    for ( int i = 0; i < Rec.cols(); i++)
+                        Rec.col(i) = Rec.col(i) + mean.segment(i*Nr, Nr);
+
+                }
+
+                std::cout << "Writing reconstructed field ..." << "\t";
+
+                write_Reconstructed_fields ( Rec, Coords,
+                                        settings.out_file,
+                                        settings.flag_prob, nt );
+
+                std::cout << "Done" << std::endl << std::endl;
             }
-
-            std::cout << "Writing reconstructed field ..." << "\t";
-
-            write_Reconstructed_fields ( Rec, Coords,
-                                    settings.out_file,
-                                    settings.flag_prob );
-
-            std::cout << "Done" << std::endl << std::endl;
 
         }
 
@@ -140,11 +144,10 @@ int main(int argc, char *argv[]) {
         std::cout << std::endl;
         std::cout << "Initialized vector of times " << std::endl;
 
-        Eigen::VectorXd lambda_POD(settings.Ns - 1);
-        Eigen::VectorXd K_pc(settings.Ns - 1);
-        Eigen::MatrixXd eig_vec_POD(settings.Ns - 1, settings.Ns - 1);
-        Eigen::VectorXcd lambda_DMD(settings.Ns - 1);
-        Eigen::MatrixXcd eig_vec_DMD(settings.Ns - 1, settings.Ns - 1);
+        Eigen::VectorXd lambda_POD;
+        Eigen::MatrixXd eig_vec_POD;
+        Eigen::VectorXcd lambda_DMD;
+        Eigen::MatrixXcd eig_vec_DMD;
         
 
         if ( settings.flag_mean == "YES" )
@@ -161,20 +164,50 @@ int main(int argc, char *argv[]) {
                                         eig_vec_DMD,
                                         lambda_POD,
                                         eig_vec_POD,
-                                        K_pc,
-                                        settings.En );
+                                        settings.r );
 
-        int Nm = Nmod( settings.En, K_pc);
+        int Nm = Phi.cols();
+
+        // if ( settings.r == 0)
+        // {
+        //     Nm = SVHT ( lambda_POD, settings.Ns, sn_set.rows() );
+        //     std::cout << "DMD rank from SVD hard thresold : " << Nm << std::endl << std::endl;
+        // } else
+        // {
+
+        //     Nm = std::min(settings.r, settings.Ns - 1);
+        //     std::cout << "DMD user-defined rank  : " << Nm << std::endl << std::endl;
+        // }
 
         std::cout << " Done! " << std::endl << std::endl;
 
+        Eigen::VectorXcd omega(Nm);
+        for ( int i = 0; i < Nm; i++ )
+                omega(i) = std::log(lambda_DMD(i))/(settings.Dt_cfd*settings.Ds);
+
+        std::cout << " DMD eigen-values :\n " << omega << std::endl;
+
         std::cout << "Calculating coefficients DMD ... " << "\t";
 
-        Eigen::MatrixXcd alfa = Calculate_Coefs_DMD ( eig_vec_DMD,
-                                            eig_vec_POD,
-                                            lambda_DMD,
-                                            lambda_POD,
-                                            Nm );
+        //Calculating coefficients solving optimization problem
+        // Eigen::MatrixXcd alfa = Calculate_Coefs_DMD ( eig_vec_DMD,
+                                            // eig_vec_POD,
+                                            // lambda_DMD,
+                                            // lambda_POD,
+                                            // settings.Ns - 1 );
+
+        Eigen::VectorXcd alfa = Calculate_Coefs_DMD_exact ( sn_set.leftCols(settings.Ns-1),  //matrix of first Ns-1 snaps 
+                                                            lambda_DMD,  //slow eigenvalues
+                                                            Phi ); //slow exact DMD modes
+
+        //Calculating coefficients with ls
+        // Eigen::VectorXcd b = Eigen::VectorXcd::Zero(sn_set.rows()); 
+        // for ( int k = 0; k < sn_set.rows(); k++ )
+        //     b(k).real(sn_set(k,0)); 
+
+        // Eigen::VectorXcd alfa = Phi.jacobiSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(b).col(0);
+        // std::cout << " alfas :\n " << alfa << std::endl;
+
 
         std::cout << " Done! " << std::endl << std::endl;
 
@@ -185,9 +218,7 @@ int main(int argc, char *argv[]) {
             write_modes_DMD ( Phi, Coords, settings.flag_prob );
             std::cout << "Complete!" << std::endl;
 
-            Eigen::VectorXcd omega(Nm);
-            for ( int i = 0; i < Nm; i++ )
-                 omega(i) = std::log(lambda_DMD(i))/(settings.Dt_cfd*settings.Ds);
+
 
             std::cout << "Writing time dynamics ..." << "\t";
             write_TimeDynamics_DMD ( omega, alfa, t_vec );
@@ -200,36 +231,135 @@ int main(int argc, char *argv[]) {
         if ( settings.flag_rec == "YES" )
         {
 
-            std::cout << "Reconstructing field at time : " << settings.t_rec << "\t";
-
-            Eigen::MatrixXcd Rec = Reconstruction_DMD ( settings.t_rec,
-                                                    settings.Dt_cfd*settings.Ds,
-                                                    alfa,
-                                                    Phi,
-                                                    lambda_DMD,
-                                                    settings.flag_prob );
-
-            std::cout << "Done" << std::endl;
-
-            if ( settings.flag_mean == "YES" )
+            for ( int nt = 0; nt < settings.t_rec.size(); nt ++)
             {
+                
+                std::cout << "Reconstructing field at time : " << settings.t_rec[nt] << "\t";
 
-                for ( int i = 0; i < Rec.cols(); i++)
-                    Rec.col(i) = Rec.col(i) + mean.segment(i*Nr, Nr);
+                Eigen::MatrixXcd Rec = Reconstruction_DMD ( settings.t_rec[nt],
+                                                        settings.Dt_cfd*settings.Ds,
+                                                        alfa,
+                                                        Phi,
+                                                        lambda_DMD,
+                                                        settings.flag_prob );
+
+                std::cout << "Done" << std::endl;
+
+                if ( settings.flag_mean == "YES" )
+                {
+
+                    for ( int i = 0; i < Rec.cols(); i++)
+                        Rec.col(i) = Rec.col(i) + mean.segment(i*Nr, Nr);
+
+                }
+
+                std::cout << "Writing reconstructed field ..." << "\t";
+
+                write_Reconstructed_fields ( Rec.real(), Coords,
+                                        settings.out_file,
+                                        settings.flag_prob, nt );
+
+                std::cout << "Done" << std::endl << std::endl;
 
             }
-
-            std::cout << "Writing reconstructed field ..." << "\t";
-
-            write_Reconstructed_fields ( Rec.real(), Coords,
-                                    settings.out_file,
-                                    settings.flag_prob );
-
-            std::cout << "Done" << std::endl << std::endl;
 
         }
 
     }
+
+
+    if ( settings.flag_method == "mrDMD" )
+    {
+
+
+        Eigen::VectorXd t_vec( settings.Ns );
+        t_vec(0) = 0.0;
+
+        for ( int i = 1; i < settings.Ns; i++ )
+            t_vec(i) = t_vec(i-1) + settings.Dt_cfd*settings.Ds;
+
+        double dts = t_vec(1) - t_vec(0);
+
+        std::cout << std::endl;
+        std::cout << "Initialized vector of times " << std::endl;
+        
+        if ( settings.flag_mean == "YES" )
+        {
+            std::cout << "Subtracting mean from snapshots ... " << std::endl << std::endl;
+            for ( int i = 0; i < settings.Ns; i++ )
+                sn_set.col(i) -= mean;
+        }
+
+        std::cout << "Computing nodes for Multi-Resolution Analysis... " << std::endl <<std::endl;        
+
+        double t_0 = 0.0;
+        int level = 0, bin_num = 0, offset = 0, max_levels = 7, max_cycles = 2;
+        std::vector<node_mrDMD> nodes = {}; 
+        nodes = mrDMD_basis( sn_set,      
+                            nodes,  
+                            settings.r,                    
+                            dts,                      
+                            t_0,                
+                            level,                          
+                            bin_num,
+                            offset,
+                            max_levels,
+                            max_cycles);
+
+        for ( int i = 0; i < nodes.size(); i++ ) 
+        {
+            std::cout << "---------Node " << i << "------------" << std::endl << std::endl;
+            std::cout << " Level  " << nodes[i].l << "\t"<< "Time interval : [" << nodes[i].t_begin << ", " << nodes[i].t_end << "]" << std::endl;    
+            std::cout << " Snapshot interval (snaps index) : " << nodes[i].start << "\t" << nodes[i].stop << std::endl;
+            std::cout << " bin_size : " << nodes[i].bin_size << std::endl;
+            std::cout << " bin_num : " << nodes[i].bin_num << std::endl;
+            std::cout << " DMD-rank : " << nodes[i].r << std::endl;
+            std::cout << " Number of slow modes : " << nodes[i].n << std::endl;
+            std::cout << std::endl;
+
+        }
+
+        std::cout << " Done! " << std::endl << std::endl;
+
+
+        if ( settings.flag_rec == "YES" )
+        {
+
+            for ( int nt = 0; nt < settings.t_rec.size(); nt ++)
+            {
+                
+                std::cout << "Reconstructing field at time : " << settings.t_rec[nt] << "\t";
+
+                Eigen::MatrixXcd Rec = Reconstruction_mrDMD ( settings.t_rec[nt],                                                                                                                                                                                                                                                                                                                              
+                                                            dts,       
+                                                            nodes,     
+                                                            settings.flag_prob );  
+
+                std::cout << "Done" << std::endl;
+
+                if ( settings.flag_mean == "YES" )
+                {
+
+                    for ( int i = 0; i < Rec.cols(); i++)
+                        Rec.col(i) = Rec.col(i) + mean.segment(i*Nr, Nr);
+
+                }
+
+                std::cout << "Writing reconstructed field ..." << "\t";
+
+                write_Reconstructed_fields ( Rec.real(), Coords,
+                                        settings.out_file,
+                                        settings.flag_prob, nt );
+
+                std::cout << "Done" << std::endl << std::endl;
+
+            }
+
+        }
+
+    }
+
+
 
     std::cout << std::endl;    
     std::cout << "-----------RBM-Clyde end-------------" << std::endl << std::endl;

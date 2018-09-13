@@ -40,7 +40,6 @@ endif ()
 #find_package(Scip REQUIRED)
 #find_package(Threads REQUIRED)
 
-
 # set variables
 set (PROJECT_PATH                                "${CMAKE_CURRENT_SOURCE_DIR}")
 set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}      "${PROJECT_PATH}/cmake/Modules/")
@@ -58,14 +57,15 @@ option(ENABLE_SMARTUQ      "UQ methods"               ON)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 
+find_package(GLS REQUIRED)
 
 # Include header directories
 get_filename_component(HEADERS "include" REALPATH)
-include_directories(${HEADERS})
+include_directories(${HEADERS} ${GSL_INCLUDE_DIRS})
 
 
 # Include external libraries
-set (MANDATORY_LIBRARIES "")
+set (MANDATORY_LIBRARIES ${GSL_LIBRARIES})
 include(cmake/Dependencies.cmake)
 
 
@@ -84,7 +84,7 @@ set_target_properties(clyde-rbm PROPERTIES LINKER_LANGUAGE CXX)
 
 # Add main as execturable
 add_executable(clyde-rbm-main src/main.cpp)
-target_link_libraries(clyde-rbm-main clyde-rbm ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(clyde-rbm-main clyde-rbm ${MANDATORY_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 set_target_properties(clyde-rbm-main PROPERTIES LINKER_LANGUAGE CXX)
 add_dependencies(clyde-rbm-main clyde-rbm)
 

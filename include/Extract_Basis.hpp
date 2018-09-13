@@ -23,6 +23,26 @@ void eig_sort( Eigen::VectorXd &lam, Eigen::MatrixXd &eig_vec );
 
 int SVHT ( Eigen::VectorXd lam, int m, int n );
 
+struct node_mrDMD
+{
+    
+    int l;                              //level number
+    int bin_num;                        //time bin number
+    int bin_size;                       //time bin size
+    int step;                           //Delta between snaps based on nyquist frequency
+    int start, stop;                    //starting and stopping index for snapshots
+    double rho;                         //cut-off frequency
+    double t_begin, t_end;              //initial and final instant of each window with respect to the whole interval
+    double dt;
+    int r;                              //rank reduction
+    int n;                              //number of slow modes
+    Eigen::MatrixXcd Modes;             //Matrix of modes
+    Eigen::VectorXcd Coefs;             //Vector of optimized coefs
+    Eigen::VectorXcd lam;               //Vector of eigenvalues
+    Eigen::MatrixXcd Psi;               //Time evolution matrix
+
+};
+
 
 
 Eigen::MatrixXd SPOD_basis( const Eigen::MatrixXd &snap_set,
@@ -41,43 +61,34 @@ Eigen::MatrixXcd DMD_basis( const Eigen::MatrixXd &snap_set,
                             Eigen::MatrixXcd &eig_vec,
                             Eigen::VectorXd &lam_POD,
                             Eigen::MatrixXd &eig_vec_POD,
-                            Eigen::VectorXd &K_pc,
-                            const double En );
+                            const int r = 0 );
 
 
-class Mr_DMD {
 
-protected:
-
-    //Number of levels for multi-resolution analysis
-    int m_L;
-
-    //Number of snapshots
-    int m_Ns;
-
-    //mr_DMD modes
-    std::vector<Eigen::MatrixXcd> Modes;
-
-    //mr_DMD Coefficients
-    std::vector<Eigen::MatrixXcd> Coefs;
-    
-
-public:
+Eigen::VectorXcd Calculate_Coefs_DMD ( const Eigen::MatrixXcd &eig_vec,
+                                    const Eigen::MatrixXcd &eig_vec_POD,
+                                    const Eigen::VectorXcd &lam,
+                                    const Eigen::VectorXcd &lam_POD,
+                                    const int Ns );
 
 
-    //Default constructor
-    Mr_DMD();
 
-    //Constructor
-    Mr_DMD( const int L,
-            const int Ns,
-            const double En,
-            const Eigen::MatrixXd &sn_set );
+Eigen::VectorXcd Calculate_Coefs_DMD_exact ( const Eigen::MatrixXd &sn_set,  //matrix of first Ns-1 snaps 
+                                            const Eigen::VectorXcd &lam,  //slow eigenvalues
+                                            const Eigen::MatrixXcd &Phi ); //slow exact DMD modes
 
-    
-    
 
-};
+
+std::vector<node_mrDMD> mrDMD_basis( Eigen::MatrixXd &snap_set,       //Initial set of snapshots
+                                    std::vector<node_mrDMD> &nodes,          //Initialize as empty vector
+                                    const int r,                                  //DMD rank
+                                    double dts,                             //dt between initial snapshots
+                                    double t_0 = 0.0,                       //time instant of the first snapshot of the series
+                                    int level = 0,                          
+                                    int bin_num = 0,
+                                    int offset = 0,
+                                    int max_levels = 7,
+                                    int max_cycles = 2);
 
 
 #endif //EXTRACT_BASIS_HPP

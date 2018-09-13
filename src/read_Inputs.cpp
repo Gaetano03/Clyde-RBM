@@ -44,6 +44,8 @@ keywords read_keyword_type( const std::string &key_string )
         return FLAG_INTERP;
     else if( key_string == "T_REC" )
         return T_REC;
+    else if( key_string == "RANK_DMD" )
+        return RANK_DMD;
     else
     {
         std::cout << "Something wrong in cfg file" << std::endl;
@@ -197,10 +199,36 @@ void Read_cfg ( const std::string filename, prob_settings &settings )
                     break;
                 }
 
+                case RANK_DMD:
+                {
+                    settings.r = std::stoi(value);
+                    std::cout << "DMD rank : " << value << std::endl;
+                    break;
+                }
+
                 case T_REC:
                 {
-                    settings.t_rec = stod(value);
-                    std::cout << "Time desired for reconstruction : " << value << std::endl;
+                    std::string str = value;
+                    std::stringstream ss(str);
+
+                    double i;
+
+                    while ( ss >> i ) {
+
+                        settings.t_rec.push_back(i);
+
+                        if (ss.peek() != ',' || ss.peek() != ' ')
+                            ss.ignore();
+
+                    }
+
+                    std::cout << "Times desired for reconstruction: \t";
+                    
+                    for ( i = 0; i < settings.t_rec.size(); i++ )
+                        std::cout << settings.t_rec[i] << "\t";
+
+                    std::cout << std::endl;
+
                     break;
                 }
 
@@ -298,7 +326,7 @@ int N_gridpoints( const std::string file_in) {
     while(getline( flow_data, line_flow_data )) 
     {
            
-        if ( line_flow_data.compare(0,1,"E") == 0 ) //if reading SU2 native restart file
+        if ( line_flow_data.compare(0,1,"E") == 0 || line_flow_data.compare(0,1,"A") == 0 ) //if reading SU2 native restart file
             break;
             
         n_row++;
@@ -375,7 +403,7 @@ Eigen::MatrixXd read_col( std::string filename, int Nr, std::vector<int> Cols )
             while( getline( iss, token, '\t') )
             {
 
-                if ( token.compare(0,1,"E") == 0 ) //if reading SU2 restart file
+                if ( token.compare(0,1,"E") == 0 || token.compare(0,1,"A") == 0 ) //if reading SU2 restart file
                     break;
 
                 rubbish = std::stold(token);
@@ -405,7 +433,7 @@ Eigen::MatrixXd read_col( std::string filename, int Nr, std::vector<int> Cols )
             exit (EXIT_FAILURE);
         }
 
-        if ( token.compare(0,1,"E") == 0 ) //if reading SU2 restart file
+        if ( token.compare(0,1,"E") == 0 || token.compare(0,1,"A") == 0 ) //if reading SU2 restart file
             break;
 
         field.row(n_row) = point; 

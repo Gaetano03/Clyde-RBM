@@ -29,133 +29,89 @@ Eigen::MatrixXd Reconstruction_S_POD ( const std::vector<double> &t_vec,
                                 const double En,
                                 std::string flag_prob,
                                 std::string flag_interp ) 
-                                {
+{
 
-                                    std::vector< std::vector<double> > T( t_vec.size(), std::vector<double>(1));
-                                    std::vector<double> t(1, time);
+    std::vector< std::vector<double> > T( t_vec.size(), std::vector<double>(1));
+    std::vector<double> t(1, time);
 
-                                    double avgDt = 0.0;
+    double avgDt = 0.0;
 
-                                    for ( int i = 0; i < t_vec.size(); i++ ) {
-                                        T[i][0] = t_vec[i];
-                                    }
+    for ( int i = 0; i < t_vec.size(); i++ ) {
+        T[i][0] = t_vec[i];
+    }
 
-                                    for ( int i = 1; i < t_vec.size(); i++ ) {
-                                        avgDt += t_vec[i] - t_vec[i-1];
-                                    }
+    for ( int i = 1; i < t_vec.size(); i++ ) {
+        avgDt += t_vec[i] - t_vec[i-1];
+    }
 
-                                    avgDt = avgDt/(double)(t_vec.size()-1);
+    avgDt = avgDt/(double)(t_vec.size()-1);
 
-                                    //Vector of surrogate coefficients
-                                    std::vector<double> coefs_intrp( t_vec.size() );
+    //Vector of surrogate coefficients
+    std::vector<double> coefs_intrp( t_vec.size() );
 
-                                    // Create surrogates for coefficients
-                                    std::vector<rbf> surr_coefs;
-                                    RBF_CONSTANTS rbf_const {avgDt, 0.0};
+    // Create surrogates for coefficients
+    std::vector<rbf> surr_coefs;
+    RBF_CONSTANTS rbf_const {avgDt, 0.0};
 
-                                    // Define the number of modes Nrec to use in the reconstruction
-                                    int Nrec = Nmod(En, K_pc);
+    // Define the number of modes Nrec to use in the reconstruction
+    int Nrec = Nmod(En, K_pc);
 
-                                    for ( int i = 0; i < Nrec; i++ ){
-                                        
-                                        std::vector<double> coefs ;
-                                        for (int j = 0 ; j < t_vec.size() ; j++)
-                                            coefs.push_back(Coeffs(i,j));
+    for ( int i = 0; i < Nrec; i++ ){
+        
+        std::vector<double> coefs ;
+        for (int j = 0 ; j < t_vec.size() ; j++)
+            coefs.push_back(Coeffs(i,j));
 
-                                        surr_coefs.push_back( rbf(T, coefs, get_key_rbf( flag_interp ), rbf_const) );               
-                                        surr_coefs[i].build();
-                                        surr_coefs[i].evaluate(t, coefs_intrp[i]);
-                                
-                                    }
+        surr_coefs.push_back( rbf(T, coefs, get_key_rbf( flag_interp ), rbf_const) );               
+        surr_coefs[i].build();
+        surr_coefs[i].evaluate(t, coefs_intrp[i]);
 
-                                    Eigen::VectorXd coefs_t(t_vec.size());
+    }
 
-                                    for (int i = 0; i < t_vec.size() ; i++)
-                                        coefs_t(i) = coefs_intrp[i];
+    Eigen::VectorXd coefs_t(t_vec.size());
 
-                                    Eigen::MatrixXd Sig = Eigen::MatrixXd::Zero(Nrec, Nrec);
+    for (int i = 0; i < t_vec.size() ; i++)
+        coefs_t(i) = coefs_intrp[i];
 
-                                    for ( int i = 0; i < Nrec; i++ )
-                                        Sig(i, i) = sqrt(lam(i));
+    Eigen::MatrixXd Sig = Eigen::MatrixXd::Zero(Nrec, Nrec);
 
-
-                                    if ( flag_prob == "SCALAR" ) 
-                                    {
-
-                                        Eigen::MatrixXd Rec_field = phi.leftCols(Nrec)*Sig*coefs_t.head(Nrec);  
-                                        return Rec_field;
-
-                                    } else if ( flag_prob == "VECTOR-2D" || flag_prob == "VELOCITY-2D" ) 
-                                    {
-
-                                        Eigen::MatrixXd Rec_field (phi.rows()/2, 2);
-                                        Rec_field.col(0) = phi.topLeftCorner(phi.rows()/2, Nrec)*Sig*coefs_t.head(Nrec);
-                                        Rec_field.col(1) = phi.bottomLeftCorner(phi.rows()/2, Nrec)*Sig*coefs_t.head(Nrec);
-                                        return Rec_field;
+    for ( int i = 0; i < Nrec; i++ )
+        Sig(i, i) = sqrt(lam(i));
 
 
-                                    } else if ( flag_prob == "VECTOR-3D" || flag_prob == "VELOCITY-3D" ) 
-                                    {
+    if ( flag_prob == "SCALAR" ) 
+    {
 
-                                        Eigen::MatrixXd Rec_field (phi.rows()/3, 3);
-                                        Rec_field.col(0) = phi.topLeftCorner(phi.rows()/3, Nrec)*Sig*coefs_t.head(Nrec); 
-                                        Rec_field.col(1) = phi.block(phi.rows()/3, 0, phi.rows()/3, Nrec)*Sig*coefs_t.head(Nrec);
-                                        Rec_field.col(2) = phi.bottomLeftCorner(phi.rows()/3, Nrec)*Sig*coefs_t.head(Nrec);                                        
-                                        return Rec_field;
+        Eigen::MatrixXd Rec_field = phi.leftCols(Nrec)*Sig*coefs_t.head(Nrec);  
+        return Rec_field;
 
-                                    } else 
-                                    {
+    } else if ( flag_prob == "VECTOR-2D" || flag_prob == "VELOCITY-2D" ) 
+    {
 
-                                            std::cout << " Set well flag_prob! Now Exiting ..." << std::endl;
-                                            exit (EXIT_FAILURE);
-
-                                    }
-
-                                }
+        Eigen::MatrixXd Rec_field (phi.rows()/2, 2);
+        Rec_field.col(0) = phi.topLeftCorner(phi.rows()/2, Nrec)*Sig*coefs_t.head(Nrec);
+        Rec_field.col(1) = phi.bottomLeftCorner(phi.rows()/2, Nrec)*Sig*coefs_t.head(Nrec);
+        return Rec_field;
 
 
-Eigen::VectorXcd Calculate_Coefs_DMD ( const Eigen::MatrixXcd &eig_vec,
-                                    const Eigen::MatrixXcd &eig_vec_POD,
-                                    const Eigen::VectorXcd &lam,
-                                    const Eigen::VectorXcd &lam_POD,
-                                    const int Nm )
-                                    {
+    } else if ( flag_prob == "VECTOR-3D" || flag_prob == "VELOCITY-3D" ) 
+    {
 
+        Eigen::MatrixXd Rec_field (phi.rows()/3, 3);
+        Rec_field.col(0) = phi.topLeftCorner(phi.rows()/3, Nrec)*Sig*coefs_t.head(Nrec); 
+        Rec_field.col(1) = phi.block(phi.rows()/3, 0, phi.rows()/3, Nrec)*Sig*coefs_t.head(Nrec);
+        Rec_field.col(2) = phi.bottomLeftCorner(phi.rows()/3, Nrec)*Sig*coefs_t.head(Nrec);                                        
+        return Rec_field;
 
-                                        Eigen::MatrixXcd Sigma = Eigen::MatrixXcd::Zero(Nm, Nm);
-                                        Eigen::MatrixXcd V_and(Nm, lam_POD.size()); 
+    } else 
+    {
 
-                                        for ( int i = 0; i < Nm; i++)
-                                            Sigma(i, i) = std::sqrt(lam_POD(i));
-                                      
-                                        for ( int i = 0; i < Nm; i++ )
-                                        {
-                                            for ( int j = 0; j < lam_POD.size(); j++ )
-                                                V_and(i,j) = std::pow(lam(i), j);                                                                                         
-                                        }
+            std::cout << " Set well flag_prob! Now Exiting ..." << std::endl;
+            exit (EXIT_FAILURE);
 
-                                        Eigen::MatrixXcd Y_sq = eig_vec.conjugate().transpose()*eig_vec;
-                                        Eigen::MatrixXcd V_and_sq = V_and*V_and.conjugate().transpose();
-                                        V_and_sq = V_and_sq.conjugate();
+    }
 
-                                        Eigen::MatrixXcd M1(Nm, Nm);
-
-                                        for ( int i = 0; i < Nm; i++ )
-                                        {
-
-                                            for ( int j = 0; j < Nm; j++)
-                                                M1(i,j) = Y_sq(i,j)*V_and_sq(i,j);
-
-                                        }
-
-                                        Eigen::MatrixXcd M2 = V_and*eig_vec_POD.leftCols(Nm)*Sigma.conjugate()*eig_vec;
-                                        Eigen::VectorXcd dum = M2.diagonal();
-                                        dum = dum.conjugate();
-
-                                        return M1.inverse()*dum;
-                                       
-
-                                    } 
+}
 
 
 Eigen::MatrixXcd Reconstruction_DMD ( const double time, const double dt, 
@@ -163,59 +119,59 @@ Eigen::MatrixXcd Reconstruction_DMD ( const double time, const double dt,
                                     const Eigen::MatrixXcd &Phi,
                                     const Eigen::VectorXcd &lam,
                                     const std::string flag_prob )
-                                    {
+{
 
-                                        int Nm = lam.size();
-                                        Eigen::VectorXcd omega(Nm);
+    int Nm = lam.size();
+    Eigen::VectorXcd omega(Nm);
 
-                                        for ( int i = 0; i < Nm; i ++)
-                                        {
-/*Remove after check*/                      std::cout << " Lambda_" << i << " = " << lam(i) << "\t"; 
-                                            omega(i) = std::log(lam(i))/dt;
-/*Remove after check*/                      std::cout << " omega_" << i << " = " << omega(i) << std::endl;
-                                        }
+    for ( int i = 0; i < Nm; i ++)
+    {
+/*Remove after check*/                  //    std::cout << " Lambda_" << i << " = " << lam(i) << "\t"; 
+        omega(i) = std::log(lam(i))/dt;
+/*Remove after check*/                  //    std::cout << " omega_" << i << " = " << omega(i) << std::endl;
+    }
 
 
-                                        Eigen::MatrixXcd v_rec (Phi.rows(),1);
+    Eigen::MatrixXcd v_rec = Eigen::MatrixXcd::Zero(Phi.rows(),1);
 
-                                        for ( int i = 0; i < Nm; i++ )
-                                        {
-                                            
-                                            v_rec += std::exp(omega(i)*time)*alfa(i)*Phi.col(i);
+    for ( int i = 0; i < Nm; i++ )
+    {
         
-                                        }
+        v_rec += std::exp(omega(i)*time)*alfa(i)*Phi.col(i);
 
-                                        if ( flag_prob == "SCALAR" )
-                                        {
+    }
 
-                                            return v_rec;
+    if ( flag_prob == "SCALAR" )
+    {
 
-                                        } else if ( flag_prob == "VECTOR-2D" || flag_prob == "VELOCITY-2D" )
-                                        {
+        return v_rec;
 
-                                            Eigen::MatrixXcd Rec(Phi.rows()/2,2);
-                                            Rec.col(0) = v_rec.topRows(Phi.rows()/2);
-                                            Rec.col(1) = v_rec.bottomRows(Phi.rows()/2);
-                                            return Rec;
+    } else if ( flag_prob == "VECTOR-2D" || flag_prob == "VELOCITY-2D" )
+    {
 
-                                        } else if ( flag_prob == "VECTOR-3D" || flag_prob == "VELOCITY-3D" )
-                                        {
+        Eigen::MatrixXcd Rec(Phi.rows()/2,2);
+        Rec.col(0) = v_rec.topRows(Phi.rows()/2);
+        Rec.col(1) = v_rec.bottomRows(Phi.rows()/2);
+        return Rec;
 
-                                            Eigen::MatrixXcd Rec(Phi.rows()/3,3);
-                                            Rec.col(0) = v_rec.topRows(Phi.rows()/3);
-                                            Rec.col(1) = v_rec.middleRows(Phi.rows()/3,Phi.rows()/3);
-                                            Rec.col(2) = v_rec.bottomRows(Phi.rows()/3);
-                                            return Rec;
+    } else if ( flag_prob == "VECTOR-3D" || flag_prob == "VELOCITY-3D" )
+    {
 
-                                        } else 
-                                        {
+        Eigen::MatrixXcd Rec(Phi.rows()/3,3);
+        Rec.col(0) = v_rec.topRows(Phi.rows()/3);
+        Rec.col(1) = v_rec.middleRows(Phi.rows()/3,Phi.rows()/3);
+        Rec.col(2) = v_rec.bottomRows(Phi.rows()/3);
+        return Rec;
 
-                                            std::cout << "Set well problem flag! Exiting ... " << std::endl;
-                                            exit (EXIT_FAILURE);
+    } else 
+    {
 
-                                        }
+        std::cout << "Set well problem flag! Exiting ... " << std::endl;
+        exit (EXIT_FAILURE);
 
-                                    } 
+    }
+
+} 
 
 
 
@@ -226,27 +182,120 @@ Eigen::MatrixXcd TimeEvo_DMD ( Eigen::VectorXd &time,
                             const Eigen::VectorXcd &lam )
                             {
 
-                                int Nm = lam.size();
-                                Eigen::VectorXcd omega(Nm);
+int Nm = lam.size();
+Eigen::VectorXcd omega(Nm);
 
-                                for ( int i = 0; i < Nm; i ++)
-                                {
-/*Remove after check*/              std::cout << " Lambda_" << i << " = " << lam(i) << "\t"; 
-                                    omega(i) = std::log(lam(i))/dt;
-/*Remove after check*/              std::cout << " omega_" << i << " = " << omega(i) << std::endl;
-                                }
+for ( int i = 0; i < Nm; i ++)
+{
+/*Remove after check*/          //    std::cout << " Lambda_" << i << " = " << lam(i) << "\t"; 
+    omega(i) = std::log(lam(i))/dt;
+/*Remove after check*/          //    std::cout << " omega_" << i << " = " << omega(i) << std::endl;
+}
 
-                                Eigen::MatrixXcd v_rec = Eigen::MatrixXcd::Zero(Phi.rows(),time.size());
+Eigen::MatrixXcd v_rec = Eigen::MatrixXcd::Zero(Phi.rows(),time.size());
 
-                                for ( int k = 0; k < time.size(); k++ )
-                                {
-                                    for ( int i = 0; i < Nm; i++ )
-                                    {
-                                        v_rec.col(k) += std::exp(omega(i)*time(k))*alfa(i)*Phi.col(i);
-                                        // std::cout << " exp(omega_" << i << "*t) : " << std::exp(omega(i)*time(k)) << std::endl;
-                                    }
-                                }
+for ( int k = 0; k < time.size(); k++ )
+{
+    for ( int i = 0; i < Nm; i++ )
+    {
+        v_rec.col(k) += std::exp(omega(i)*time(k))*alfa(i)*Phi.col(i);
+        // std::cout << " exp(omega_" << i << "*t) : " << std::exp(omega(i)*time(k)) << std::endl;
+    }
+}
 
-                                return v_rec;
+return v_rec;
 
-                            }
+}
+
+
+
+void nodes_mrDMD_sort( std::vector<node_mrDMD> &nodes ) {
+
+    int swap_count = 1;
+    int temp;
+    node_mrDMD temp_node;
+
+    while (swap_count > 0)
+    {
+
+        swap_count = 0;
+
+        for( int index = 1; index < nodes.size(); index++ )
+        {
+
+            if ( nodes[index].l < nodes[index-1].l )
+            {
+
+                temp_node = nodes[index-1];
+                nodes[index-1] = nodes[index];
+                nodes[index] = temp_node;
+
+                swap_count++;
+
+            }
+        }
+    }
+
+}
+
+
+
+Eigen::MatrixXcd Reconstruction_mrDMD ( const double t_inst, const double dts,
+                                    const std::vector<node_mrDMD> &nodes,
+                                    const std::string flag_prob )
+{
+
+    Eigen::MatrixXcd v_rec = Eigen::MatrixXcd::Zero(nodes[0].Modes.rows(),1);
+    double dt;
+    std::complex<double> omegaj;
+
+    for ( int i = 0; i < nodes.size(); i++)
+    {
+        
+        if ( t_inst >= nodes[i].t_begin && t_inst < nodes[i].t_end )
+        {
+
+            dt = dts*nodes[i].step;
+            for ( int j = 0; j < nodes[i].lam.size(); j++ )
+            {
+
+                omegaj = std::log(nodes[i].lam(j))/dt;
+                v_rec += std::exp(omegaj*(t_inst - nodes[i].t_begin))*nodes[i].Coefs(j)*nodes[i].Modes.col(j);
+
+            }
+
+        }
+
+    }
+
+    if ( flag_prob == "SCALAR" )
+    {
+
+        return v_rec;
+
+    } else if ( flag_prob == "VECTOR-2D" || flag_prob == "VELOCITY-2D" )
+    {
+
+        Eigen::MatrixXcd Rec(v_rec.rows()/2,2);
+        Rec.col(0) = v_rec.topRows(v_rec.rows()/2);
+        Rec.col(1) = v_rec.bottomRows(v_rec.rows()/2);
+        return Rec;
+
+    } else if ( flag_prob == "VECTOR-3D" || flag_prob == "VELOCITY-3D" )
+    {
+
+        Eigen::MatrixXcd Rec(v_rec.rows()/3,3);
+        Rec.col(0) = v_rec.topRows(v_rec.rows()/3);
+        Rec.col(1) = v_rec.middleRows(v_rec.rows()/3,v_rec.rows()/3);
+        Rec.col(2) = v_rec.bottomRows(v_rec.rows()/3);
+        return Rec;
+
+    } else 
+    {
+
+        std::cout << "Set well problem flag! Exiting ... " << std::endl;
+        exit (EXIT_FAILURE);
+
+    }
+
+}

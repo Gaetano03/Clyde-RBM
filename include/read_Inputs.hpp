@@ -32,7 +32,7 @@ struct prob_settings
     double Dt_cfd;                  //delta t used in CFD simulation
 
 
-    //------Parameter for POD-SPOD---------
+    //------Parameters for POD-SPOD---------
     int Nf;                     //filter size for SPOD
     double En;                  //Energetic content desired for reconstruction
     
@@ -43,10 +43,13 @@ struct prob_settings
                                     for correlation matrix, flag*/
 
 
+    //------Parameters for DMD-----------
+    int r;                      //rank of standard DMD
+                                //if r=0 SVHT is used
     //----Parameter for Reconstruction---------
     std::string flag_rec;           //Activate-deactivate field reconstruction 
     std::string flag_interp;        //Interpolation technique for rbf
-    double t_rec;                   //time desired for reconstruction
+    std::vector<double> t_rec;                   //times desired for reconstruction
 
 };
 
@@ -69,8 +72,8 @@ enum keywords
                 FLAG_WDB_BE,
                 FLAG_REC,
                 FLAG_INTERP,
-                T_REC
-
+                T_REC,
+                RANK_DMD
             };
 
 
