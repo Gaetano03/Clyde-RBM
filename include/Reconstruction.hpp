@@ -53,5 +53,28 @@ Eigen::MatrixXcd Reconstruction_mrDMD ( const double time,                      
                                     const std::vector<node_mrDMD> &nodes,       //nodes
                                     const std::string flag_prob );              
 
+
+std::vector<rbf> getSurrCoefs ( const std::vector<double> &t_vec,
+                            const Eigen::MatrixXd &Coeffs,
+                            std::string flag_interp = "LINEAR" );
+
+
+Eigen::MatrixXcd Reconstruction_Hybrid_DMD ( const double time,
+                                        const std::vector<double> t_vec,
+                                        const Eigen::MatrixXcd &alfa,
+                                        const Eigen::MatrixXcd &Phi,
+                                        const Eigen::VectorXcd &omega,
+                                        const std::string flag_prob = "VELOCITY-2D",
+                                        const std::string flag_interp = "LINEAR" );
+
+
+Eigen::MatrixXd Reconstruction_RDMD ( const double time,
+                                    const std::vector<double> t_vec,
+                                    const Eigen::MatrixXd &alfa,
+                                    const Eigen::MatrixXd &Phi,
+                                    const std::string flag_prob,
+                                    const std::string flag_interp ); 
+
+
 #endif // RECONSTRUCTION_HPP
 

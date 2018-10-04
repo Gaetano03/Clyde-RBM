@@ -21,6 +21,7 @@ struct prob_settings
     //-----Definition of general variables--------
     int Ns;                         //Number of snapshots
     int Ds;                         //Delta between snapshots
+    int nstart;                     //starting snapshot number
     std::string in_file;            //Input filename
     std::string out_file;           //Output filename (for reconstruction)
     std::string flag_dim;           //Problem dimension (2D/3D)
@@ -46,6 +47,8 @@ struct prob_settings
     //------Parameters for DMD-----------
     int r;                      //rank of standard DMD
                                 //if r=0 SVHT is used
+    int r_RDMD;                 //Number of modes for recursive DMD
+    std::string dmd_coef_flag;  //method for coefficients calculation
     //----Parameter for Reconstruction---------
     std::string flag_rec;           //Activate-deactivate field reconstruction 
     std::string flag_interp;        //Interpolation technique for rbf
@@ -58,6 +61,7 @@ struct prob_settings
 enum keywords 
             { 
                 NS, DS, EN, NF, SIGMA,
+                NSTART,
                 DT_CFD,
                 FLAG_DIM,
                 FLAG_PROB,
@@ -73,7 +77,9 @@ enum keywords
                 FLAG_REC,
                 FLAG_INTERP,
                 T_REC,
-                RANK_DMD
+                RANK_DMD,
+                DMD_COEF_FLAG,
+                RANK_RDMD
             };
 
 

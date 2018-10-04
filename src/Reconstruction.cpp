@@ -299,3 +299,162 @@ Eigen::MatrixXcd Reconstruction_mrDMD ( const double t_inst, const double dts,
     }
 
 }
+
+
+std::vector<rbf> getSurrCoefs ( const std::vector<double> &t_vec,
+                                const Eigen::MatrixXd &Coeffs,
+                                std::string flag_interp ) 
+{
+    int Ns = Coeffs.rows();
+    int Nrec = Coeffs.cols();
+
+    std::vector< std::vector<double> > T( t_vec.size(), std::vector<double>(1));
+    double avgDt = 0.0;
+
+    for ( int i = 0; i < t_vec.size(); i++ ) {
+        T[i][0] = t_vec[i];
+    }
+
+    for ( int i = 1; i < t_vec.size(); i++ ) {
+        avgDt += t_vec[i] - t_vec[i-1];
+    }
+
+    avgDt = avgDt/(double)(t_vec.size()-1);
+
+    // Create surrogates for coefficients
+    std::vector<rbf> surr_coefs;
+    RBF_CONSTANTS rbf_const {avgDt, 0.0};
+
+    for ( int i = 0; i < Nrec; i++ ){
+        
+        std::vector<double> coefs ;
+        for (int j = 0 ; j < t_vec.size() ; j++)
+            coefs.push_back(Coeffs(j,i));
+
+        surr_coefs.push_back( rbf(T, coefs, get_key_rbf( flag_interp ), rbf_const) );               
+        surr_coefs[i].build();
+
+    }
+
+    return surr_coefs;
+
+}
+
+
+Eigen::MatrixXcd Reconstruction_Hybrid_DMD ( const double time,
+                                        const std::vector<double> t_vec,
+                                        const Eigen::MatrixXcd &alfa,
+                                        const Eigen::MatrixXcd &Phi,
+                                        const Eigen::VectorXcd &omega,
+                                        const std::string flag_prob,
+                                        const std::string flag_interp )
+{
+
+    int Nm = omega.size();
+
+
+    Eigen::MatrixXcd v_rec = Eigen::MatrixXcd::Zero(Phi.rows(),1);
+    Eigen::MatrixXd Coefs_real = alfa.real();
+    Eigen::MatrixXd Coefs_imag = alfa.imag();
+    std::vector<rbf> surr_coefs_real = getSurrCoefs( t_vec, Coefs_real, flag_interp);
+    std::vector<rbf> surr_coefs_imag = getSurrCoefs( t_vec, Coefs_imag, flag_interp);
+    
+    std::vector<double> t(1,time);
+    for ( int i = 0; i < Nm; i++ )
+    {
+        double R, I;
+        surr_coefs_real[i].evaluate(t, R);
+        surr_coefs_imag[i].evaluate(t, I);
+        std::complex<double> coef_t(R,I);
+
+        v_rec += std::exp(omega(i)*time)*coef_t*Phi.col(i);
+
+    }
+
+    if ( flag_prob == "SCALAR" )
+    {
+
+        return v_rec;
+
+    } else if ( flag_prob == "VECTOR-2D" || flag_prob == "VELOCITY-2D" )
+    {
+
+        Eigen::MatrixXcd Rec(Phi.rows()/2,2);
+        Rec.col(0) = v_rec.topRows(Phi.rows()/2);
+        Rec.col(1) = v_rec.bottomRows(Phi.rows()/2);
+        return Rec;
+
+    } else if ( flag_prob == "VECTOR-3D" || flag_prob == "VELOCITY-3D" )
+    {
+
+        Eigen::MatrixXcd Rec(Phi.rows()/3,3);
+        Rec.col(0) = v_rec.topRows(Phi.rows()/3);
+        Rec.col(1) = v_rec.middleRows(Phi.rows()/3,Phi.rows()/3);
+        Rec.col(2) = v_rec.bottomRows(Phi.rows()/3);
+        return Rec;
+
+    } else 
+    {
+
+        std::cout << "Set well problem flag! Exiting ... " << std::endl;
+        exit (EXIT_FAILURE);
+
+    }
+
+} 
+
+
+
+Eigen::MatrixXd Reconstruction_RDMD ( const double time,
+                                    const std::vector<double> t_vec,
+                                    const Eigen::MatrixXd &alfa,
+                                    const Eigen::MatrixXd &Phi,
+                                    const std::string flag_prob,
+                                    const std::string flag_interp  ) 
+{
+
+    int Nm = alfa.rows();
+// std::cout << "Nm : " << Nm << std::endl;
+// std::cout << "size alfa : [" << alfa.rows() << ", " << alfa.cols() << "]" << std::endl;
+    std::vector<rbf> surr_coefs = getSurrCoefs( t_vec, alfa.transpose(), flag_interp);
+// std::cout << "Done line 419" << std::endl;
+    Eigen::VectorXd coef_t(Nm);
+    
+    std::vector<double> t(1,time);
+    for ( int i = 0; i < Nm; i++ )
+        surr_coefs[i].evaluate(t, coef_t(i));
+// std::cout << "Done line 425" << std::endl;
+    Eigen::MatrixXd v_rec = Phi*coef_t;    
+
+// std::cout << "Done line 428" << std::endl;
+    if ( flag_prob == "SCALAR" )
+    {
+
+        return v_rec;
+
+    } else if ( flag_prob == "VECTOR-2D" || flag_prob == "VELOCITY-2D" )
+    {
+
+        Eigen::MatrixXd Rec(Phi.rows()/2,2);
+        Rec.col(0) = v_rec.topRows(Phi.rows()/2);
+        Rec.col(1) = v_rec.bottomRows(Phi.rows()/2);
+        return Rec;
+
+    } else if ( flag_prob == "VECTOR-3D" || flag_prob == "VELOCITY-3D" )
+    {
+
+        Eigen::MatrixXd Rec(Phi.rows()/3,3);
+        Rec.col(0) = v_rec.topRows(Phi.rows()/3);
+        Rec.col(1) = v_rec.middleRows(Phi.rows()/3,Phi.rows()/3);
+        Rec.col(2) = v_rec.bottomRows(Phi.rows()/3);
+        return Rec;
+
+    } else 
+    {
+
+        std::cout << "Set well problem flag! Exiting ... " << std::endl;
+        exit (EXIT_FAILURE);
+
+    }
+
+}

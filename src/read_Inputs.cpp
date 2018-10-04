@@ -12,6 +12,8 @@ keywords read_keyword_type( const std::string &key_string )
         return EN;
     else if( key_string == "SIGMA" )
         return SIGMA;
+    else if( key_string == "NSTART" )
+        return NSTART;
     else if( key_string == "DT_CFD" )
         return DT_CFD;
     else if( key_string == "FLAG_DIM" )
@@ -46,6 +48,10 @@ keywords read_keyword_type( const std::string &key_string )
         return T_REC;
     else if( key_string == "RANK_DMD" )
         return RANK_DMD;
+    else if( key_string == "RANK_RDMD" )
+        return RANK_RDMD;
+    else if( key_string == "DMD_COEF_FLAG" )
+        return DMD_COEF_FLAG;
     else
     {
         std::cout << "Something wrong in cfg file" << std::endl;
@@ -122,6 +128,13 @@ void Read_cfg ( const std::string filename, prob_settings &settings )
                     break;
                 }
 
+                case NSTART:
+                {
+                    settings.nstart = std::stoi(value);
+                    std::cout << "Initial snapshot number : " << value << std::endl;
+                    break;
+                }
+                
                 case DT_CFD:
                 {
                     settings.Dt_cfd = std::stod(value);
@@ -203,6 +216,20 @@ void Read_cfg ( const std::string filename, prob_settings &settings )
                 {
                     settings.r = std::stoi(value);
                     std::cout << "DMD rank : " << value << std::endl;
+                    break;
+                }
+
+                case RANK_RDMD:
+                {
+                    settings.r_RDMD = std::stoi(value);
+                    std::cout << "Recursive-DMD rank : " << value << std::endl;
+                    break;
+                }
+
+                case DMD_COEF_FLAG:
+                {
+                    settings.dmd_coef_flag = value;
+                    std::cout << "DMD coefs method : " << value << std::endl;
                     break;
                 }
 

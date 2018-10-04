@@ -15,13 +15,16 @@
 
 #include "LinearAlgebra/Eigen/Dense"
 #include "LinearAlgebra/Eigen/Eigenvalues"
-
+#include "LinearAlgebra/Eigen/MatrixFunctions"
 
 int Nmod ( double En, Eigen::VectorXd K_pc );
 
+
 void eig_sort( Eigen::VectorXd &lam, Eigen::MatrixXd &eig_vec );
 
+
 int SVHT ( Eigen::VectorXd lam, int m, int n );
+
 
 struct node_mrDMD
 {
@@ -44,6 +47,11 @@ struct node_mrDMD
 };
 
 
+Eigen::MatrixXd nullspace( Eigen::VectorXd s, Eigen::MatrixXd vh, const double atol = 1e-13, const double rtol = 0 );
+
+
+bool check_linear_consistency( Eigen::MatrixXd X, Eigen::MatrixXd Y, Eigen::MatrixXd Nullspace, const double atol = 1e-13, const double rtol = 0);
+
 
 Eigen::MatrixXd SPOD_basis( const Eigen::MatrixXd &snap_set,
                                 Eigen::VectorXd &lam,
@@ -55,14 +63,12 @@ Eigen::MatrixXd SPOD_basis( const Eigen::MatrixXd &snap_set,
                                 double sigma = 1.0);
 
 
-
 Eigen::MatrixXcd DMD_basis( const Eigen::MatrixXd &snap_set,
                             Eigen::VectorXcd &lam,
                             Eigen::MatrixXcd &eig_vec,
                             Eigen::VectorXd &lam_POD,
                             Eigen::MatrixXd &eig_vec_POD,
                             const int r = 0 );
-
 
 
 Eigen::VectorXcd Calculate_Coefs_DMD ( const Eigen::MatrixXcd &eig_vec,
@@ -72,11 +78,16 @@ Eigen::VectorXcd Calculate_Coefs_DMD ( const Eigen::MatrixXcd &eig_vec,
                                     const int Ns );
 
 
-
 Eigen::VectorXcd Calculate_Coefs_DMD_exact ( const Eigen::MatrixXd &sn_set,  //matrix of first Ns-1 snaps 
                                             const Eigen::VectorXcd &lam,  //slow eigenvalues
                                             const Eigen::MatrixXcd &Phi ); //slow exact DMD modes
 
+
+Eigen::MatrixXcd Calculate_Coefs_Matrix_DMD ( const Eigen::MatrixXd &sn_set,
+                                            const Eigen::MatrixXcd &Phi,
+                                            const Eigen::VectorXcd &omega,
+                                            const double t_0,
+                                            const double dt_dmd);
 
 
 std::vector<node_mrDMD> mrDMD_basis( Eigen::MatrixXd &snap_set,       //Initial set of snapshots
@@ -88,7 +99,21 @@ std::vector<node_mrDMD> mrDMD_basis( Eigen::MatrixXd &snap_set,       //Initial 
                                     int bin_num = 0,
                                     int offset = 0,
                                     int max_levels = 7,
-                                    int max_cycles = 2);
+                                    int max_cycles = 2,
+                                    std::string flag_coefs = "OPT" );
 
+
+
+Eigen::MatrixXd RDMD_modes_coefs ( const Eigen::MatrixXd &sn_set,
+                                    Eigen::MatrixXd &Coefs,     //Define N_mod RDMD through the dimension of matrix Coefs
+                                    Eigen::VectorXd &lambda,
+                                    const int r );              //rank of pure DMD at each step
+
+
+
+Eigen::MatrixXcd fbDMD_basis ( const Eigen::MatrixXd &snap_set,
+                            Eigen::VectorXcd &lam,
+                            Eigen::MatrixXcd &eig_vec,
+                            const int r );
 
 #endif //EXTRACT_BASIS_HPP

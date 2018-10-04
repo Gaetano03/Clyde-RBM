@@ -1,7 +1,7 @@
 #include "read_Inputs.hpp"
 #include "Generate_snset.hpp"
 
-Eigen::MatrixXd generate_snap_matrix( const int Nr, const int Ns, const int ds,
+Eigen::MatrixXd generate_snap_matrix( const int Nr, const int Ns, const int ds, const int init,
                                         std::vector<int> Cols,
                                         std::string inputfile,
                                         std::string flag_prob )
@@ -22,7 +22,7 @@ Eigen::MatrixXd generate_snap_matrix( const int Nr, const int Ns, const int ds,
     
         Eigen::MatrixXd snap(2*Nr, Ns);
 
-        for( int i = 0; i < Ns*ds; i += ds )
+        for( int i = init; i < (Ns*ds + init); i += ds )
         {
 
             std::stringstream buffer;
@@ -48,7 +48,7 @@ Eigen::MatrixXd generate_snap_matrix( const int Nr, const int Ns, const int ds,
 
         Eigen::MatrixXd snap(3*Nr, Ns);
 
-        for( int i = 0; i < Ns*ds; i += ds )
+        for( int i = init; i < (Ns*ds + init); i += ds )
         {
 
             std::stringstream buffer;
@@ -77,7 +77,7 @@ Eigen::MatrixXd generate_snap_matrix( const int Nr, const int Ns, const int ds,
 
         Eigen::MatrixXd snap(2*Nr, Ns);
 
-        for( int i = 0; i < Ns*ds; i += ds )
+        for( int i = init; i < (Ns*ds + init); i += ds )
         {
 
             std::stringstream buffer;
@@ -106,7 +106,7 @@ Eigen::MatrixXd generate_snap_matrix( const int Nr, const int Ns, const int ds,
 
         Eigen::MatrixXd snap(3*Nr, Ns);
 
-        for( int i = 0; i < Ns*ds; i += ds )
+        for( int i = init; i < (Ns*ds + init); i += ds )
         {
 
             std::stringstream buffer;
@@ -139,7 +139,7 @@ Eigen::MatrixXd generate_snap_matrix( const int Nr, const int Ns, const int ds,
 
             Eigen::MatrixXd snap(Nr, Ns);
 
-            for( int i = 0; i < Ns*ds; i += ds )
+            for( int i = init; i < (Ns*ds + init); i += ds )
             {
 
                 std::stringstream buffer;
