@@ -303,7 +303,6 @@ Eigen::MatrixXcd DMD_basis ( const Eigen::MatrixXd &snap_set,
                                 eig_vec_POD.leftCols(Nm)*Sig_inv.block(0,0,Nm,Nm);
 
     //Eigen::VectorXcd Full_lam;
-
     if ( Atilde.size() == 1 && Atilde(0,0) == 0.0 )
     {
         lam = Eigen::VectorXcd::Zero(1);
@@ -364,6 +363,7 @@ Eigen::MatrixXcd DMD_basis ( const Eigen::MatrixXd &snap_set,
                                     for (int i = 0; i < Nm; i++)
                                         phi.col(i) = 1.0/lam(i)*appo*eig_vec.col(i);
     // 
+
                                     return phi;
 
     //Standard DMD

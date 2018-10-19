@@ -46,13 +46,14 @@ struct node_mrDMD
 
 };
 
-
+//Calculate the nullspace of a given set of snapshots
 Eigen::MatrixXd nullspace( Eigen::VectorXd s, Eigen::MatrixXd vh, const double atol = 1e-13, const double rtol = 0 );
 
 
+//Check if linear consistency is verified ( null(X) included in null(Y) with X = [x_0, x_1, ..., x_(N-1)], Y = [x_1, x_2, ..., x_N])
 bool check_linear_consistency( Eigen::MatrixXd X, Eigen::MatrixXd Y, Eigen::MatrixXd Nullspace, const double atol = 1e-13, const double rtol = 0);
 
-
+//SPOD/POD basis extraction (calculates also coefficients)
 Eigen::MatrixXd SPOD_basis( const Eigen::MatrixXd &snap_set,
                                 Eigen::VectorXd &lam,
                                 Eigen::VectorXd &K_pc,
@@ -62,7 +63,7 @@ Eigen::MatrixXd SPOD_basis( const Eigen::MatrixXd &snap_set,
                                 std::string filter_flag = "BOX",  
                                 double sigma = 1.0);
 
-
+//DMD basis extraction
 Eigen::MatrixXcd DMD_basis( const Eigen::MatrixXd &snap_set,
                             Eigen::VectorXcd &lam,
                             Eigen::MatrixXcd &eig_vec,
@@ -70,26 +71,26 @@ Eigen::MatrixXcd DMD_basis( const Eigen::MatrixXd &snap_set,
                             Eigen::MatrixXd &eig_vec_POD,
                             const int r = 0 );
 
-
+//Calculating optimized Coefficients according to Schmid and Jovanovic
 Eigen::VectorXcd Calculate_Coefs_DMD ( const Eigen::MatrixXcd &eig_vec,
                                     const Eigen::MatrixXcd &eig_vec_POD,
                                     const Eigen::VectorXcd &lam,
                                     const Eigen::VectorXcd &lam_POD,
                                     const int Ns );
 
-
+//Calculating optimized Coefficients following the implementation on the Weblog of DMD
 Eigen::VectorXcd Calculate_Coefs_DMD_exact ( const Eigen::MatrixXd &sn_set,  //matrix of first Ns-1 snaps 
                                             const Eigen::VectorXcd &lam,  //slow eigenvalues
                                             const Eigen::MatrixXcd &Phi ); //slow exact DMD modes
 
-
+//Calculate DMD coefficients solving a least square problem for each time step
 Eigen::MatrixXcd Calculate_Coefs_Matrix_DMD ( const Eigen::MatrixXd &sn_set,
                                             const Eigen::MatrixXcd &Phi,
                                             const Eigen::VectorXcd &omega,
                                             const double t_0,
                                             const double dt_dmd);
 
-
+//Multi-resolution DMD
 std::vector<node_mrDMD> mrDMD_basis( Eigen::MatrixXd &snap_set,       //Initial set of snapshots
                                     std::vector<node_mrDMD> &nodes,          //Initialize as empty vector
                                     const int r,                                  //DMD rank
@@ -103,14 +104,14 @@ std::vector<node_mrDMD> mrDMD_basis( Eigen::MatrixXd &snap_set,       //Initial 
                                     std::string flag_coefs = "OPT" );
 
 
-
+//Recursive DMD according to Noack (calculates also the matrix of coefficients)
 Eigen::MatrixXd RDMD_modes_coefs ( const Eigen::MatrixXd &sn_set,
                                     Eigen::MatrixXd &Coefs,     //Define N_mod RDMD through the dimension of matrix Coefs
                                     Eigen::VectorXd &lambda,
                                     const int r );              //rank of pure DMD at each step
 
 
-
+//Forward-Backward DMD
 Eigen::MatrixXcd fbDMD_basis ( const Eigen::MatrixXd &snap_set,
                             Eigen::VectorXcd &lam,
                             Eigen::MatrixXcd &eig_vec,

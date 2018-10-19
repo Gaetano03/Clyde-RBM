@@ -237,6 +237,42 @@ int main(int argc, char *argv[]) {
                                                 omega,
                                                 t_0,
                                                 settings.Dt_cfd*settings.Ds );
+            
+    
+            std::cout << "Writing training points ..." << std::endl;
+
+            std::ofstream train_real;
+            train_real.open("train_real.dat");
+
+
+            for ( int k = 0; k < Nsnap; k++ )
+            {
+            
+                for( int j = 0; j < Alfas.cols(); j++ ) 
+                    train_real << Alfas(k,j).real() << " ";   
+
+            train_real << std::endl;
+
+            }
+
+            train_real.close();
+
+
+            std::ofstream train_imag;
+            train_imag.open("train_imag.dat");
+
+
+            for ( int k = 0; k < Nsnap; k++ )
+            {
+            
+                for( int j = 0; j < Alfas.cols(); j++ ) 
+                    train_imag << Alfas(k,j).imag() << " ";   
+
+            train_imag << std::endl;
+
+            }
+
+            train_imag.close();
 
         }
         else
@@ -248,7 +284,7 @@ int main(int argc, char *argv[]) {
 
         std::cout << " Done! " << std::endl << std::endl;
 
-        if ( settings.flag_wdb_be == "YES" )
+        if ( settings.flag_wdb_be == "YES" && settings.dmd_coef_flag!= "HYBRID" )
         {
             
             std::cout << "Writing modes ..." << "\t";
@@ -384,6 +420,22 @@ int main(int argc, char *argv[]) {
         // }
 
         std::cout << " Done! " << std::endl << std::endl;
+
+
+        if ( settings.flag_wdb_be == "YES" )
+        {
+            
+            std::cout << "Write coefs dynamics : " << std::endl;
+
+
+            for ( int l = 0; l < max_levels; l ++ )
+            {
+                std::cout << "Level " << l << "\t";
+                write_CoefsDynamics_mrDMD( nodes, l, t_vec.size()/std::pow(2,l), max_levels);
+                std::cout << "Done" << std::endl;
+            }
+        }
+
 
 
         if ( settings.flag_rec == "YES" )

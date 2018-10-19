@@ -6,16 +6,22 @@
 
 
 
-int main ()
+int main ( int argc, char *argv[] )
 {
 
+
+
 std::cout << "Main start" << std::endl;
-std::string method = "DMD";
+std::string method = argv[1];
+int test = std::atoi(argv[2]);
+int Nsnap = std::atoi(argv[3]);
+int r = std::atoi(argv[4]);
+int fac_rec = std::atoi(argv[5]);
 
 double pi = 3.14159;
 Eigen::VectorXd x = Eigen::VectorXd::LinSpaced(50,-5.0,5.0);
 Eigen::VectorXd y = Eigen::VectorXd::LinSpaced(50,-5.0,5.0);
-Eigen::VectorXd t = Eigen::VectorXd::LinSpaced(100,0.0,5.0);
+Eigen::VectorXd t = Eigen::VectorXd::LinSpaced(fac_rec*Nsnap,0.0,5.0);
 
 //Generate gaussian noise
 // const double mean = 0.0;
@@ -56,31 +62,48 @@ for ( int k = 0; k < Ns; k++ )
     {
         for ( int j = 0; j < Npy; j++)
         {   
+            switch ( test )
+            {
+                case 1: 
+                {
+                //double sin wave with noise
+                //f(i,j) = std::sin(0.2*pi*x(i))*std::sin(0.5*t(j)) + dist(generator);
+                
+                //gaussian 1D traveling wave
+                // f(i,j) = std::exp(-std::pow((x(i)-t(j)+5.0)/2.0, 2.0));
+                
+                //Sinusoidal 2D traveling wave
+                //f(i,j) = std::sin(kl*(x(i)+y(j))-omega*t(k));
 
-            //double sin wave with noise
-            //f(i,j) = std::sin(0.2*pi*x(i))*std::sin(0.5*t(j)) + dist(generator);
-            
-            //gaussian 1D traveling wave
-            // f(i,j) = std::exp(-std::pow((x(i)-t(j)+5.0)/2.0, 2.0));
-            
-            //Sinusoidal 2D traveling wave
-            //f(i,j) = std::sin(kl*(x(i)+y(j))-omega*t(k));
+                //Two gaussian 2D traveling wave at different velocities
+                    f(i,j) = A1*std::exp( -((x(i) - x01 - vel1*t(k))*(x(i) - x01 - vel1*t(k))/2.0/sigma_x1/sigma_x1 +
+                        (y(j) - y01)*(y(j) - y01)/2.0/sigma_y1/sigma_y1)) + A2*std::exp( -((x(i) - x02)*(x(i) - x02)/2.0/sigma_x2/sigma_x2 +
+                        (y(j) - y02 - vel2*t(k))*(y(j) - y02 - vel2*t(k))/2.0/sigma_y2/sigma_y2));
+                break;
+                }
+                case 2:
+                {
+                //Two gaussian 2D traveling wave at different velocities ( non linear )
+                    f(i,j) = A1*std::exp( -((x(i) - x01 - vel1*t(k)*t(k))*(x(i) - x01 - vel1*t(k)*t(k))/2.0/sigma_x1/sigma_x1 +
+                        (y(j) - y01)*(y(j) - y01)/2.0/sigma_y1/sigma_y1)) + A2*std::exp( -((x(i) - x02)*(x(i) - x02)/2.0/sigma_x2/sigma_x2 +
+                        (y(j) - y02 + vel2*std::sqrt(t(k)))*(y(j) - y02 + vel2*std::sqrt(t(k)))/2.0/sigma_y2/sigma_y2));
 
-            //Two gaussian 2D traveling wave at different velocities
-            // f(i,j) = A1*std::exp( -((x(i) - x01 - vel1*t(k))*(x(i) - x01 - vel1*t(k))/2.0/sigma_x1/sigma_x1 +
-            //         (y(j) - y01)*(y(j) - y01)/2.0/sigma_y1/sigma_y1)) + A2*std::exp( -((x(i) - x02)*(x(i) - x02)/2.0/sigma_x2/sigma_x2 +
-            //         (y(j) - y02 - vel2*t(k))*(y(j) - y02 - vel2*t(k))/2.0/sigma_y2/sigma_y2));
-            
-            //Two gaussian 2D traveling wave at different velocities ( non linear )
-            // f(i,j) = A1*std::exp( -((x(i) - x01 - vel1*t(k)*t(k))*(x(i) - x01 - vel1*t(k)*t(k))/2.0/sigma_x1/sigma_x1 +
-            //         (y(j) - y01)*(y(j) - y01)/2.0/sigma_y1/sigma_y1)) + A2*std::exp( -((x(i) - x02)*(x(i) - x02)/2.0/sigma_x2/sigma_x2 +
-            //         (y(j) - y02 + vel2*std::sqrt(t(k)))*(y(j) - y02 + vel2*std::sqrt(t(k)))/2.0/sigma_y2/sigma_y2));
-
-
-            //Two gaussian 2D oscillating wave with different frequencies
-            f(i,j) = A1*std::exp( -((x(i) - x01 - std::sin(vel1*t(k)))*(x(i) - x01 - std::sin(vel1*t(k)))/2.0/sigma_x1/sigma_x1 +
-                    (y(j) - y01)*(y(j) - y01)/2.0/sigma_y1/sigma_y1)) + A2*std::exp( -((x(i) - x02)*(x(i) - x02)/2.0/sigma_x2/sigma_x2 +
-                    (y(j) - y02 - std::sin(vel2*t(k)))*(y(j) - y02 - std::sin(vel2*t(k)))/2.0/sigma_y2/sigma_y2));
+                break;
+                }
+                case 3:
+                {
+                //Two gaussian 2D oscillating wave with different frequencies
+                    f(i,j) = A1*std::exp( -((x(i) - x01 - std::sin(vel1*t(k)))*(x(i) - x01 - std::sin(vel1*t(k)))/2.0/sigma_x1/sigma_x1 +
+                        (y(j) - y01)*(y(j) - y01)/2.0/sigma_y1/sigma_y1)) + A2*std::exp( -((x(i) - x02)*(x(i) - x02)/2.0/sigma_x2/sigma_x2 +
+                        (y(j) - y02 - std::sin(vel2*t(k)))*(y(j) - y02 - std::sin(vel2*t(k)))/2.0/sigma_y2/sigma_y2));
+                break;
+                }
+                //One gaussian 2D oscillating wave with assigned frequency
+                // f(i,j) = A1*std::exp( -((x(i) - x01 - std::sin(vel1*t(k)))*(x(i) - x01 - std::sin(vel1*t(k)))/2.0/sigma_x1/sigma_x1 +
+                //         (y(j) - y01)*(y(j) - y01)/2.0/sigma_y1/sigma_y1));
+                default:
+                    break;
+            }
         }
     }
 
@@ -103,6 +126,7 @@ for ( int k = 0; k < Npx*Npy; k++ )
 f_data << std::endl; 
 }
 
+
 f_data.close();
 
 Eigen::VectorXcd lam;
@@ -110,15 +134,24 @@ Eigen::MatrixXcd eig_vec;
 Eigen::VectorXd lam_POD;
 Eigen::MatrixXd eig_vec_POD;
 
-int r = 20; 
-Eigen::VectorXd tnew(200); //times for reconstruction
+
+Eigen::VectorXd tnew(fac_rec*Nsnap); //times for reconstruction
 tnew(0) = 0.0;
-for ( int i = 1; i < 200 ; i ++ )
+for ( int i = 1; i < fac_rec*Nsnap ; i ++ )
 {
-    tnew(i) = tnew(i-1) + dt/2;
+    tnew(i) = tnew(i-1) + dt/fac_rec;
 }
 
 Eigen::MatrixXcd Rec(Npx*Npy, tnew.size());
+
+Eigen::MatrixXd sn_set(Npx*Npy, Nsnap);
+
+for ( int i = 0; i < Nsnap; i ++ )
+{
+    sn_set.col(i) = data.col(i*fac_rec);
+
+}
+
 
 std::string flag_coef = "OPT";
 if( method == "mrDMD")
@@ -126,7 +159,7 @@ if( method == "mrDMD")
     int max_levels = 12;
     int max_cycles = 2;
     std::vector<node_mrDMD> nodes = {};
-    nodes = mrDMD_basis( data,       
+    nodes = mrDMD_basis( sn_set,       
                         nodes,        
                         r,                                  
                         t(1) - t(0), 0.0, 0, 0, 0, max_levels, max_cycles, flag_coef);
@@ -165,7 +198,7 @@ std::cout << " Computed Reconstruction" << std::endl;
 
 if( method == "DMD" )
 {
-    Eigen::MatrixXcd Phi = DMD_basis( data,
+    Eigen::MatrixXcd Phi = DMD_basis( sn_set,
                                     lam,
                                     eig_vec,
                                     lam_POD,
@@ -192,18 +225,24 @@ if( method == "DMD" )
                                                 eig_vec_POD,
                                                 lam,
                                                 lam_POD,
-                                                Ns - 1 );
+                                                Nsnap - 1 );
+
+std::cout << "Done line 230" << std::endl;
     Eigen::VectorXcd omega(lam.size());
     for ( int i = 0; i < lam.size(); i++ )
         omega(i) = std::log(lam(i))/dt;
-    std::cout << "DMD eigenvalues :\n" << omega << std::endl;
+    // std::cout << "DMD eigenvalues :\n" << lam << std::endl;
+    // std::cout << "DMD omega :\n" << omega << std::endl;
+    
+    
     //Calculate Hybridized coefficients
     std::cout << "Calculating cofficients ... " << std::endl;
-    Eigen::MatrixXcd Alfas = Calculate_Coefs_Matrix_DMD ( data,
+    Eigen::MatrixXcd Alfas = Calculate_Coefs_Matrix_DMD ( sn_set,
                                                         Phi,
                                                         omega,
                                                         t_0,
                                                         dt );
+    
     std::cout << "Done" << std::endl; 
 
     std::cout << "Writing training points ..." << std::endl;
@@ -212,7 +251,7 @@ if( method == "DMD" )
     train_real.open("train_real.dat");
 
 
-    for ( int k = 0; k < t.size(); k++ )
+    for ( int k = 0; k < Nsnap; k++ )
     {
 
         for( int j = 0; j < Alfas.cols(); j++ ) 
@@ -224,71 +263,88 @@ if( method == "DMD" )
 
     train_real.close();
 
+
+    std::ofstream train_imag;
+    train_imag.open("train_imag.dat");
+
+
+    for ( int k = 0; k < Nsnap; k++ )
+    {
+
+        for( int j = 0; j < Alfas.cols(); j++ ) 
+            train_imag << Alfas(k,j).imag() << " ";   
+
+    train_imag << std::endl;
+
+    }
+
+    train_imag.close();
+
     std::cout << "Done" << std::endl;
 
     std::vector<double> t_vec;
-    for ( int i = 0; i < Ns; i++ )
+    for ( int i = 0; i < Nsnap; i++ )
         t_vec.push_back(t(i));
 
-    std::vector<rbf> surr_coefs_real = getSurrCoefs ( t_vec,
-                                                    Alfas.real(),
-                                                    "LINEAR" );
+    // std::vector<rbf> surr_coefs_real = getSurrCoefs ( t_vec,
+    //                                                 Alfas.real(),
+    //                                                 "LINEAR" );
 
 
-    std::vector<rbf> surr_coefs_imag = getSurrCoefs ( t_vec,
-                                                    Alfas.imag(),
-                                                    "LINEAR" );
+    // std::vector<rbf> surr_coefs_imag = getSurrCoefs ( t_vec,
+    //                                                 Alfas.imag(),
+    //                                                 "LINEAR" );
 
-    std::cout << "Writing file with interpolating coefficients..." << std::endl;
+    // std::cout << "Writing file with interpolating coefficients..." << std::endl;
 
-    std::ofstream coefs_real;
-    coefs_real.open("Coefs__interp_real.dat");
-    std::ofstream coefs_imag;
-    coefs_imag.open("Coefs__interp_imag.dat");
+    // std::ofstream coefs_real;
+    // coefs_real.open("Coefs__interp_real.dat");
+    // std::ofstream coefs_imag;
+    // coefs_imag.open("Coefs__interp_imag.dat");
 
-    double R, I;
+    // double R, I;
 
-    for ( int k = 0; k < tnew.size(); k++ )
-    {
-            std::vector<double> t(1,tnew(k));
-        for ( int i = 0; i < Alfas.cols(); i++ )
-        {
+    // for ( int k = 0; k < tnew.size(); k++ )
+    // {
+    //         std::vector<double> t(1,tnew(k));
+    //     for ( int i = 0; i < Alfas.cols(); i++ )
+    //     {
      
-            surr_coefs_real[i].evaluate(t, R);
-            surr_coefs_imag[i].evaluate(t, I);
+    //         surr_coefs_real[i].evaluate(t, R);
+    //         surr_coefs_imag[i].evaluate(t, I);
 
-            coefs_real << R << " ";
-            coefs_imag << I << " ";
+    //         coefs_real << R << " ";
+    //         coefs_imag << I << " ";
 
-        } 
-        coefs_real << std::endl;
-        coefs_imag << std::endl;
-    }
+    //     } 
+    //     coefs_real << std::endl;
+    //     coefs_imag << std::endl;
+    // }
 
-    coefs_real.close();
-    coefs_imag.close();
+    // coefs_real.close();
+    // coefs_imag.close();
 
-    std::cout << "Done" << std::endl; 
+    // std::cout << "Done" << std::endl; 
 
     std::cout << "Computing Reconstruction... " << std::endl;
-    for ( int i = 0; i < tnew.size(); i++ )
-    {
-        Rec.col(i) = Reconstruction_Hybrid_DMD ( tnew(i),
-                                                t_vec,
-                                                Alfas,
-                                                Phi,
-                                                omega,
-                                                "SCALAR",
-                                                "LINEAR" );
-    }
+    // for ( int i = 0; i < tnew.size(); i++ )
+    // {
+    //     Rec.col(i) = Reconstruction_Hybrid_DMD ( tnew(i),
+    //                                             t_vec,
+    //                                             Alfas,
+    //                                             Phi,
+    //                                             omega,
+    //                                             "SCALAR",
+    //                                             "LINEAR" );
+    // }
 
-    // std::cout << "Done" << std::endl;
-    // Rec = TimeEvo_DMD ( tnew,
-    //                     dt,
-    //                     alfa,
-    //                     Phi,
-    //                     lam );
 
+    Rec = TimeEvo_DMD ( tnew,
+                        dt,
+                        alfa,
+                        Phi,
+                        lam );
+    std::cout << "Done" << std::endl;
 }
 
 
