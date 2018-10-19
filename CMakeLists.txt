@@ -50,6 +50,8 @@ include_directories(${HEADERS} ${GSL_INCLUDE_DIRS})
 set (MANDATORY_LIBRARIES ${GSL_LIBRARIES})
 include(cmake/Dependencies.cmake)
 
+include_directories(${SMART_UQ_INCLUDE_DIR})
+
 # Include all cpp in src
 file(GLOB_RECURSE SOURCES "src/*.cpp")
 if (BUILD_STATIC)
