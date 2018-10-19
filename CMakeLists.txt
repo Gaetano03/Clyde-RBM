@@ -1,14 +1,14 @@
 cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
-project(clyde-rbm  LANGUAGES C CXX VERSION 0.0.1)
+project(clyde-rbm LANGUAGES C CXX VERSION 0.0.1)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_VERBOSE_MAKEFILE FALSE)
 
-if(NOT CMAKE_VERBOSE_MAKEFILE)
+if (NOT CMAKE_VERBOSE_MAKEFILE)
     set(CMAKE_VERBOSE_MAKEFILE false)
-endif()
+endif ()
 
 if (CMAKE_COMPILER_IS_GNUCXX)
     set(CMAKE_C_FLAGS_DEBUG "-g -ggdb -pg -DDEBUG -fsanitize=undefined")
@@ -47,7 +47,7 @@ get_filename_component(HEADERS "include" REALPATH)
 include_directories(${HEADERS} ${GSL_INCLUDE_DIRS})
 
 # Include external libraries
-set (MANDATORY_LIBRARIES ${GSL_LIBRARIES})
+set(MANDATORY_LIBRARIES ${GSL_LIBRARIES})
 include(cmake/Dependencies.cmake)
 
 include_directories(${SMART_UQ_INCLUDE_DIR})
@@ -55,15 +55,15 @@ include_directories(${SMART_UQ_INCLUDE_DIR})
 # Include all cpp in src
 file(GLOB_RECURSE SOURCES "src/*.cpp")
 if (BUILD_STATIC)
-    add_library (clyde-rbm STATIC ${SOURCES})
-else()
-    add_library (clyde-rbm SHARED ${SOURCES})
-endif()
+    add_library(clyde-rbm STATIC ${SOURCES})
+else ()
+    add_library(clyde-rbm SHARED ${SOURCES})
+endif ()
 set_target_properties(clyde-rbm PROPERTIES LINKER_LANGUAGE CXX)
 
-if(SMART_UQ_EXTERNAL)
+if (SMART_UQ_EXTERNAL)
     add_dependencies(clyde-rbm smart-uq-external)
-endif()
+endif ()
 
 # Add main as execturable
 add_executable(clyde-rbm-main src/main.cpp)
@@ -72,7 +72,5 @@ set_target_properties(clyde-rbm-main PROPERTIES LINKER_LANGUAGE CXX)
 add_dependencies(clyde-rbm-main clyde-rbm)
 
 # If build examples add examples as executables
-if ( BUILD_EXAMPLES )
-    #set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${EXAMPLES_PATH})
-    add_subdirectory ("examples")
-endif()
+#set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${EXAMPLES_PATH})
+add_subdirectory("examples")

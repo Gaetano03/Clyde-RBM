@@ -10,10 +10,11 @@
 #include <iomanip>
 #include <complex>
 #include "Extract_Basis.hpp"
-#include "LinearAlgebra/Eigen/Dense"
-#include "LinearAlgebra/Eigen/Eigenvalues"
 #include "smartmath.h"
 #include "smart-uq/Surrogates/rbf.h"
+
+class VectorXd;
+class MatrixXd;
 
 using namespace smartuq::surrogate;
 

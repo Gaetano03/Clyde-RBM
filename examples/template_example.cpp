@@ -245,7 +245,7 @@ int main(int argc, char *argv[]) {
             train_real.open("train_real.dat");
 
 
-            for ( int k = 0; k < Nsnap; k++ )
+            for ( int k = 0; k < settings.Ns; k++ )
             {
             
                 for( int j = 0; j < Alfas.cols(); j++ ) 
@@ -262,7 +262,7 @@ int main(int argc, char *argv[]) {
             train_imag.open("train_imag.dat");
 
 
-            for ( int k = 0; k < Nsnap; k++ )
+            for ( int k = 0; k < settings.Ns; k++ )
             {
             
                 for( int j = 0; j < Alfas.cols(); j++ ) 
