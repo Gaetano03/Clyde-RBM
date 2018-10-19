@@ -11,7 +11,7 @@ if (NOT __SMART_UQ_INCLUDED) # guard against multiple includes
         # install directory
         set(smart-uq_INSTALL ${CMAKE_BINARY_DIR}/external/install)
 
-        ExternalProject_Add(smart-uq
+        ExternalProject_Add(smart-uq-external
                 PREFIX ${smart-uq_PREFIX}
                 INSTALL_DIR ${smart-uq_INSTALL}
                 GIT_REPOSITORY "git@github.com:strath-ace-labs/smart-uq.git"
