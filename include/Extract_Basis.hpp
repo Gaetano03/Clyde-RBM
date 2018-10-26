@@ -26,6 +26,9 @@ void eig_sort( Eigen::VectorXd &lam, Eigen::MatrixXd &eig_vec );
 int SVHT ( Eigen::VectorXd lam, int m, int n );
 
 
+int Not_zero( Eigen::VectorXd lam );
+
+
 struct node_mrDMD
 {
     
@@ -108,7 +111,9 @@ std::vector<node_mrDMD> mrDMD_basis( Eigen::MatrixXd &snap_set,       //Initial 
 Eigen::MatrixXd RDMD_modes_coefs ( const Eigen::MatrixXd &sn_set,
                                     Eigen::MatrixXd &Coefs,     //Define N_mod RDMD through the dimension of matrix Coefs
                                     Eigen::VectorXd &lambda,
-                                    const int r );              //rank of pure DMD at each step
+                                    const int r,                //rank of pure DMD at each step
+                                    int &rdmd,
+                                    double En );              
 
 
 //Forward-Backward DMD

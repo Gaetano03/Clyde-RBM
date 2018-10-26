@@ -49,6 +49,11 @@ struct prob_settings
                                 //if r=0 SVHT is used
     int r_RDMD;                 //Number of modes for recursive DMD
     std::string dmd_coef_flag;  //method for coefficients calculation
+    
+    //just for mrDMD
+    int max_cycles;
+    int max_levels;
+
     //----Parameter for Reconstruction---------
     std::string flag_rec;           //Activate-deactivate field reconstruction 
     std::string flag_interp;        //Interpolation technique for rbf
@@ -79,7 +84,9 @@ enum keywords
                 T_REC,
                 RANK_DMD,
                 DMD_COEF_FLAG,
-                RANK_RDMD
+                RANK_RDMD,
+                MAX_LEVELS,
+                MAX_CYCLES
             };
 
 

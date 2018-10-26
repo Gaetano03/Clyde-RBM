@@ -458,16 +458,16 @@ void write_TimeDynamics_DMD ( const Eigen::VectorXcd omega,
     int Nt = t.size();
     int Nm = alfa.size();
 
-    for ( int i = 0; i < Nt ; i ++)
-        flow_data << std::setprecision(12) << std::scientific << t << " ";
-
-    flow_data << std::endl;
-
-    for ( int i = 0; i < Nm; i++ )
+    for ( int i = 0; i < Nt; i++ )
     {
-        for ( int j = 0; j < Nt; j++ )
-            flow_data << std::setprecision(12) << std::scientific << alfa(i)*std::exp(omega(i)*t(j)) << " ";
 
+        flow_data << std::setprecision(12) << std::scientific << t(i) << " ";
+        
+        for ( int j = 0; j < Nm; j++ )
+        {
+            std::complex<double> tdyn = alfa(j)*std::exp(omega(j)*t(i));
+            flow_data << std::setprecision(12) << std::scientific << tdyn.real() << " ";
+        }
         flow_data << std::endl;
 
     }
@@ -562,8 +562,9 @@ void write_Reconstructed_fields ( Eigen::MatrixXd Rec,
     std::string out_format;
     out_format.assign ( outfile, outfile.size() - 3, 3);
 
-
-    std::string filename = root_outfile + "_" + std::to_string(nt) + "." + out_format;
+    std::stringstream buffer;
+    buffer << std::setfill('0') << std::setw(5) << std::to_string(nt);
+    std::string filename = root_outfile + "_" + buffer.str() + "." + out_format;
     std::ofstream flow_data;
     flow_data.open(filename);
 

@@ -9,7 +9,7 @@
 int main ( int argc, char *argv[] )
 {
 
-
+//Input string Method - TestNumber - Number of snapshots - rank - reconstruction
 
 std::cout << "Main start" << std::endl;
 std::string method = argv[1];
@@ -156,7 +156,7 @@ for ( int i = 0; i < Nsnap; i ++ )
 std::string flag_coef = "OPT";
 if( method == "mrDMD")
 {
-    int max_levels = 12;
+    int max_levels = 10;
     int max_cycles = 2;
     std::vector<node_mrDMD> nodes = {};
     nodes = mrDMD_basis( sn_set,       

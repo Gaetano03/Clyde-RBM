@@ -82,6 +82,20 @@ int SVHT ( Eigen::VectorXd lam, int m, int n )
 }
 
 
+int Not_zero( Eigen::VectorXd lam )
+{
+    int count = 0;
+    double eps = 1.0;
+
+    while ( eps > 1e-15 && count < lam.size() )
+    {
+        eps = lam(count);
+        count ++;
+    }
+
+    return (count - 1);
+}
+
 Eigen::MatrixXd nullspace(Eigen::VectorXd s, Eigen::MatrixXd vh, const double atol, const double rtol )
 {
 
@@ -293,14 +307,33 @@ Eigen::MatrixXcd DMD_basis ( const Eigen::MatrixXd &snap_set,
         Nm = SVHT ( lam_POD, Ns, snap_set.rows() );
         std::cout << "DMD-rank from SVHT : " << Nm << std::endl;
     }
-    else
+    else if ( r > 0 )
     {                    
         Nm = std::min(r, Ns);
         std::cout << "DMD user-defined rank : " << Nm << std::endl;
     }
+    else
+    {
+        Nm = Not_zero ( lam_POD );
+        std::cout << "DMD rank based on non zero singular values : " << Nm << std::endl;
+    }
+    
+    Eigen::MatrixXcd phi = Eigen::MatrixXd::Zero(snap_set.rows(), Nm);
+    if ( Nm == 0)
+    {
+        std::cout << " Rank is zero, no suitable data to define low order evolution " << std::endl;
+        lam = Eigen::VectorXd::Zero(0);
+        eig_vec = Eigen::MatrixXd::Zero(0,0);
+
+        return phi;
+
+    }
+
     std::cout << "Singular Values : \n" << lam_POD.head(Nm) << std::endl;
     Eigen::MatrixXd Atilde = U.leftCols(Nm).transpose()*snap_set.rightCols(Ns)*
                                 eig_vec_POD.leftCols(Nm)*Sig_inv.block(0,0,Nm,Nm);
+    
+    std::cout << "Atilde :\n " << Atilde << std::endl << std::endl; 
 
     //Eigen::VectorXcd Full_lam;
     if ( Atilde.size() == 1 && Atilde(0,0) == 0.0 )
@@ -359,7 +392,7 @@ Eigen::MatrixXcd DMD_basis ( const Eigen::MatrixXd &snap_set,
 
     // Divido per lambda
 
-                                    Eigen::MatrixXcd phi(snap_set.rows(), Nm);
+                                    
                                     for (int i = 0; i < Nm; i++)
                                         phi.col(i) = 1.0/lam(i)*appo*eig_vec.col(i);
     // 
@@ -497,7 +530,7 @@ std::vector<node_mrDMD> mrDMD_basis( Eigen::MatrixXd &snap_set,
 {
     std::cout << "--------LEVEL " << level << "---------------" << std::endl << std::endl;                                        
     const double PI = 3.1415926535;
-    int nyq = 8*max_cycles;                         //number of snaps needed to capture cycles
+    int nyq = 4*max_cycles;                         //number of snaps needed to capture cycles
 
     int N = snap_set.rows();                        //dimension of each snapshot
     int bin_size = snap_set.cols();                 //number of total snapshots available for the particular time bin
@@ -527,7 +560,6 @@ std::vector<node_mrDMD> mrDMD_basis( Eigen::MatrixXd &snap_set,
                                         eig_vec_POD,
                                         r );
 
-    std::cout << " Singular values : " << lam_POD << std::endl;
     //select only the slow modes (only if max_level > 0 (not pure DMD))
     double rho = (double)max_cycles/(double)bin_size;
     if ( max_levels == 0 )
@@ -538,19 +570,19 @@ std::vector<node_mrDMD> mrDMD_basis( Eigen::MatrixXd &snap_set,
     for ( int i =0; i < lam_DMD.size(); i++ )
     {
 
-        if ( (std::abs(std::log(lam_DMD(i))/(2*PI*step))) <= rho )  //define PI
+        if ( std::abs(std::log(lam_DMD(i))/(2.0*PI*(double)step)) <= rho )  //define PI
             slow_idx.push_back(i);
     }
 
     int n = slow_idx.size();
 
     
-    Eigen::MatrixXcd Modes(N,n);
-    Eigen::VectorXcd lam_slw(n);
-    Eigen::MatrixXcd eig_vec_slw(eig_vec_DMD.rows(), n);
+    Eigen::MatrixXcd Modes = Eigen::MatrixXcd::Zero(N,n);
+    Eigen::VectorXcd lam_slw = Eigen::VectorXcd::Zero(n) ;
+    Eigen::MatrixXcd eig_vec_slw = Eigen::MatrixXcd::Zero(eig_vec_DMD.rows(), n);
     Eigen::VectorXcd b_opt;
     Eigen::MatrixXcd alfas;    
-    Eigen::MatrixXcd Psi(n, bin_size);           //time evolution matrix
+    Eigen::MatrixXcd Psi = Eigen::MatrixXcd::Zero(n, bin_size);           //time evolution matrix
     Eigen::MatrixXcd D_dmd;
     Eigen::VectorXcd omega;
 
@@ -570,7 +602,7 @@ std::vector<node_mrDMD> mrDMD_basis( Eigen::MatrixXd &snap_set,
 
             for ( int rn = 0; rn < lam_slw.size(); rn++ )
             {
-                omega(rn) = std::log(lam_slw(rn))/(dts*step);
+                omega(rn) = std::log(lam_slw(rn))/(dts*(double)step);
             }
         }
 
@@ -578,16 +610,16 @@ std::vector<node_mrDMD> mrDMD_basis( Eigen::MatrixXd &snap_set,
                                             lam_slw,
                                             Modes );
 
-        alfas = Calculate_Coefs_Matrix_DMD ( snap_set.leftCols(bin_size - 1),
-                                            Modes,
-                                            omega,
-                                            0.0,
-                                            dts*step); 
+        // alfas = Calculate_Coefs_Matrix_DMD ( snap_set.leftCols(bin_size - 1),
+        //                                     Modes,
+        //                                     omega,
+        //                                     0.0,
+        //                                     dts*step); 
 
         for ( int i = 0; i < lam_slw.size(); i++ )
         {
             for ( int j = 0; j < bin_size; j++ )
-                V_and(i,j) = std::pow(std::pow(lam_slw(i), 1/step), j);                                                                                         
+                V_and(i,j) = std::pow(std::pow(lam_slw(i), 1.0/(double)step), (double)j);                                                                                         
         }                                                                                    
 //-----------Remove after check----------------------------------------------------------
 // std::cout << " size V_and : [" << V_and.rows() << ", " << V_and.cols() << "]" << std::endl;
@@ -595,15 +627,15 @@ std::vector<node_mrDMD> mrDMD_basis( Eigen::MatrixXd &snap_set,
 
         for ( int i = 0; i < bin_size; i++ )
         {
-            if ( flag_coefs == "OPT" )
-            {
-                Psi.col(i) = b_opt.cwiseProduct(V_and.col(i));
-            }
-            else if ( flag_coefs == "HYBRID" )
-            {
-                Eigen::VectorXcd b = alfas.row(i);
-                Psi.col(i) = b.cwiseProduct(V_and.col(i));
-            }
+            // if ( flag_coefs == "OPT" )
+            // {
+            Psi.col(i) = b_opt.cwiseProduct(V_and.col(i));
+            // }
+            // else if ( flag_coefs == "HYBRID" )
+            // {
+            //     Eigen::VectorXcd b = alfas.row(i);
+            //     Psi.col(i) = b.cwiseProduct(V_and.col(i));
+            // }
         }
         D_dmd = Modes*Psi;
         
@@ -616,7 +648,7 @@ std::vector<node_mrDMD> mrDMD_basis( Eigen::MatrixXd &snap_set,
     {
 
         b_opt = Eigen::VectorXcd::Zero(0);
-        alfas = Eigen::MatrixXcd::Zero(0,0);
+        // alfas = Eigen::MatrixXcd::Zero(0,0);
         Psi = Eigen::MatrixXcd::Zero(0,0);
         D_dmd = Eigen::MatrixXcd::Zero(N,bin_size);
 
@@ -736,13 +768,14 @@ std::vector<node_mrDMD> mrDMD_basis( Eigen::MatrixXd &snap_set,
 Eigen::MatrixXd RDMD_modes_coefs ( const Eigen::MatrixXd &sn_set,
                                     Eigen::MatrixXd &Coefs,
                                     Eigen::VectorXd &lambda,
-                                    const int r )
+                                    const int r,
+                                    int &rdmd,
+                                    double En )
 {
     int Np = sn_set.rows();
     int Ns = sn_set.cols();
-    int N_mod = Coefs.rows();
 
-    Eigen::MatrixXd Phi_RDMD(Np, N_mod);
+    Eigen::MatrixXd Phi_RDMD = Eigen::MatrixXd::Zero(Np, 3*Ns);
 
     Eigen::MatrixXd res_set = sn_set;
 
@@ -754,63 +787,154 @@ Eigen::MatrixXd RDMD_modes_coefs ( const Eigen::MatrixXd &sn_set,
     Eigen::VectorXd residual_time(Np);
     Eigen::VectorXd residual_time_norm(Ns);
 // std::cout << "Nmod = " << N_mod << std::endl;
-    for ( int i = 0; i < N_mod; i++ )
+    double eps = 0.0;
+    Eigen::VectorXd svd_new = Eigen::VectorXd::Zero(Ns);
+    Eigen::VectorXd svd_old;
+    double count = 0;
+
+    if ( rdmd == 0 )
     {
-
-        //Perform pure DMD
-        Eigen::MatrixXcd Phi = DMD_basis( res_set,
-                                            lam_DMD,
-                                            eig_vec_DMD,
-                                            lam_POD,
-                                            eig_vec_POD,
-                                            r );
-// std::cout << "size Phi : [" << Phi.rows() << ", " << Phi.cols() << "]" << std::endl; 
-// std::cout << "Done line 767" << std::endl;
-        Eigen::MatrixXd Phi_r = Phi.real();
-// std::cout << "Done line 770" << std::endl;
-        Eigen::MatrixXd coef_mod(Phi.cols(),Ns);
-// std::cout << "Done line 772" << std::endl;
-        for ( int j = 0; j < Phi.cols(); j++ )
+        while ( eps < En && count < 3*Ns )
         {
-            double sum = 0.0;
-            for ( int k = 0; k < Np; k++ )
-                sum += Phi_r(k,j)*Phi_r(k,j);
-            
-            Phi_r.col(j) = Phi_r.col(j)/std::sqrt(sum);
 
-        }
-// std::cout << "Done line 780" << std::endl;
-        Eigen::VectorXd residual_average(Phi.cols());
-        int min_idx;
+            //Perform pure DMD
+            Eigen::MatrixXcd Phi = DMD_basis( res_set,
+                                                lam_DMD,
+                                                eig_vec_DMD,
+                                                lam_POD,
+                                                eig_vec_POD,
+                                                r );
+    // std::cout << "size Phi : [" << Phi.rows() << ", " << Phi.cols() << "]" << std::endl; 
+    // std::cout << "Done line 767" << std::endl;
+            if ( count == 0)
+                svd_old = lam_POD;
 
-        for ( int r_dmd = 0; r_dmd < Phi.cols(); r_dmd++ )
-        {
-            for ( int nt = 0; nt < Ns; nt++ )
+            svd_new = lam_POD;
+            eps = (svd_old.sum() - svd_new.sum())/svd_old.sum();
+
+
+            Eigen::MatrixXd Phi_r = Phi.real();
+    // std::cout << "Done line 770" << std::endl;
+            Eigen::MatrixXd coef_mod(Phi.cols(),Ns);
+    // std::cout << "Done line 772" << std::endl;
+            for ( int j = 0; j < Phi.cols(); j++ )
             {
-                coef_mod(r_dmd, nt) = res_set.col(nt).transpose()*Phi_r.col(r_dmd);
-                residual_time = res_set.col(nt) - coef_mod(r_dmd, nt)*Phi_r.col(r_dmd);
-                residual_time_norm(nt) = residual_time.norm();
+                double sum = 0.0;
+                for ( int k = 0; k < Np; k++ )
+                    sum += Phi_r(k,j)*Phi_r(k,j);
+
+                Phi_r.col(j) = Phi_r.col(j)/std::sqrt(sum);
+
             }
+    // std::cout << "Done line 780" << std::endl;
+            Eigen::VectorXd residual_average(Phi.cols());
+            int min_idx;
 
-            double mean = 0.0;
-            for ( int m = 0; m < Ns; m++ )
-                mean += residual_time_norm(m); 
+            for ( int r_dmd = 0; r_dmd < Phi.cols(); r_dmd++ )
+            {
+                for ( int nt = 0; nt < Ns; nt++ )
+                {
+                    coef_mod(r_dmd, nt) = res_set.col(nt).transpose()*Phi_r.col(r_dmd);
+                    residual_time = res_set.col(nt) - coef_mod(r_dmd, nt)*Phi_r.col(r_dmd);
+                    residual_time_norm(nt) = residual_time.norm();
+                }
 
-            residual_average(r_dmd) = mean/Ns;
+                double mean = 0.0;
+                for ( int m = 0; m < Ns; m++ )
+                    mean += residual_time_norm(m); 
+
+                residual_average(r_dmd) = mean/Ns;
+
+            }
+    // std::cout << "Done line 800" << std::endl;
+            double min_Val = residual_average.minCoeff( &min_idx );
+
+    //std::cout << "Min index " << min_idx << std::endl;
+            Phi_RDMD.col(count) = Phi_r.col(min_idx);
+    // std::cout << "Done line 807" << std::endl;
+            Coefs.row(count) = coef_mod.row(min_idx);
+    // std::cout << "size lam_DMD: " << lam_DMD.size() << std::endl;
+            lambda(count) = lam_DMD(min_idx).real();
+    // std::cout << "Done line 811" << std::endl;
+            res_set = res_set - Phi_RDMD.col(count)*Coefs.row(count);
+    // std::cout << "Done line 813" << std::endl;  
+            std::cout << "Energy level at iteration " << count << " : " << std::setprecision(12) << eps*100 << "%" << std::endl; 
+
+            count ++;
+        }
+        rdmd = count;
+    }
+    else
+    {
+         for ( int i = 0; i < rdmd; i++ )
+        {
+            
+            //Perform pure DMD
+            Eigen::MatrixXcd Phi = DMD_basis( res_set,
+                                                lam_DMD,
+                                                eig_vec_DMD,
+                                                lam_POD,
+                                                eig_vec_POD,
+                                                r );
+
+            if ( count == 0)
+                svd_old = lam_POD;
+
+            svd_new = lam_POD;
+            eps = (svd_old.sum() - svd_new.sum())/svd_old.sum();
+
+        // std::cout << "size Phi : [" << Phi.rows() << ", " << Phi.cols() << "]" << std::endl; 
+        // std::cout << "Done line 767" << std::endl;
+            Eigen::MatrixXd Phi_r = Phi.real();
+        // std::cout << "Done line 770" << std::endl;
+            Eigen::MatrixXd coef_mod(Phi.cols(),Ns);
+        // std::cout << "Done line 772" << std::endl;
+            for ( int j = 0; j < Phi.cols(); j++ )
+            {
+                double sum = 0.0;
+                for ( int k = 0; k < Np; k++ )
+                    sum += Phi_r(k,j)*Phi_r(k,j);
+
+                Phi_r.col(j) = Phi_r.col(j)/std::sqrt(sum);
+
+            }
+        // std::cout << "Done line 780" << std::endl;
+            Eigen::VectorXd residual_average(Phi.cols());
+            int min_idx;
+
+            for ( int r_dmd = 0; r_dmd < Phi.cols(); r_dmd++ )
+            {
+                for ( int nt = 0; nt < Ns; nt++ )
+                {
+                    coef_mod(r_dmd, nt) = res_set.col(nt).transpose()*Phi_r.col(r_dmd);
+                    residual_time = res_set.col(nt) - coef_mod(r_dmd, nt)*Phi_r.col(r_dmd);
+                    residual_time_norm(nt) = residual_time.norm();
+                }
+
+                double mean = 0.0;
+                for ( int m = 0; m < Ns; m++ )
+                    mean += residual_time_norm(m); 
+
+                residual_average(r_dmd) = mean/Ns;
+
+            }
+        // std::cout << "Done line 800" << std::endl;
+            double min_Val = residual_average.minCoeff( &min_idx );
+
+        // std::cout << "Min index " << min_idx << std::endl;
+            Phi_RDMD.col(i) = Phi_r.col(min_idx);
+        // std::cout << "Done line 807" << std::endl;
+            Coefs.row(i) = coef_mod.row(min_idx);
+        // std::cout << "size lam_DMD: " << lam_DMD.size() << std::endl;
+            lambda(i) = lam_DMD(min_idx).real();
+        // std::cout << "Done line 811" << std::endl;
+            res_set = res_set - Phi_RDMD.col(i)*Coefs.row(i);
+        // std::cout << "Done line 813" << std::endl;
+            std::cout << "Energy at Iteration " << i << " : " << std::setprecision(12) << eps*100 << "%" << std::endl;
+
+            count ++;
 
         }
-// std::cout << "Done line 800" << std::endl;
-        double min_Val = residual_average.minCoeff( &min_idx );
-
-std::cout << "Min index " << min_idx << std::endl;
-        Phi_RDMD.col(i) = Phi_r.col(min_idx);
-// std::cout << "Done line 807" << std::endl;
-        Coefs.row(i) = coef_mod.row(min_idx);
-// std::cout << "size lam_DMD: " << lam_DMD.size() << std::endl;
-        lambda(i) = lam_DMD(min_idx).real();
-// std::cout << "Done line 811" << std::endl;
-        res_set = res_set - Phi_RDMD.col(i)*Coefs.row(i);
-// std::cout << "Done line 813" << std::endl;
     }
 
     return Phi_RDMD;

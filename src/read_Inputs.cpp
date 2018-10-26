@@ -52,6 +52,10 @@ keywords read_keyword_type( const std::string &key_string )
         return RANK_RDMD;
     else if( key_string == "DMD_COEF_FLAG" )
         return DMD_COEF_FLAG;
+    else if( key_string == "MAX_CYCLES" )
+        return MAX_CYCLES;
+    else if( key_string == "MAX_LEVELS" )
+        return MAX_LEVELS;
     else
     {
         std::cout << "Something wrong in cfg file" << std::endl;
@@ -230,6 +234,20 @@ void Read_cfg ( const std::string filename, prob_settings &settings )
                 {
                     settings.dmd_coef_flag = value;
                     std::cout << "DMD coefs method : " << value << std::endl;
+                    break;
+                }
+
+                case MAX_CYCLES:
+                {
+                    settings.max_cycles = std::stoi(value);
+                    std::cout << "Max_cycles for mrDMD : " << value << std::endl;
+                    break;
+                }
+
+                case MAX_LEVELS:
+                {
+                    settings.max_levels = std::stoi(value);
+                    std::cout << "Max_levels for mrDMD : " << value << std::endl;
                     break;
                 }
 

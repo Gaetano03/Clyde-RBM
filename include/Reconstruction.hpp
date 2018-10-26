@@ -39,12 +39,27 @@ Eigen::MatrixXcd Reconstruction_DMD ( const double time, const double dt,
                                     const Eigen::VectorXcd &lam,
                                     const std::string flag_prob );
 
+
+Eigen::MatrixXd TimeEvo_SPOD ( const std::vector<double> &t_vec,    //Vector of sampling times
+                            const Eigen::VectorXd &time,            //Vector of reconstructed times
+                            const Eigen::MatrixXd &Coefs,           //Matrix of POD coefficients (a(t) is along a column), dimension Ns x Nmodes
+                            const Eigen::MatrixXd &Phi,             //Matrix of modes, dimension Npoints x Nmodes
+                            const Eigen::VectorXd &lam,             //Lambda POD                        
+                            const std::string &flag_interp);         //Flag to define interpolation methods for POD coefficients
+
+
 Eigen::MatrixXcd TimeEvo_DMD ( Eigen::VectorXd &time,
                             double dt,
                             const Eigen::VectorXcd &alfa,
                             const Eigen::MatrixXcd &Phi,
                             const Eigen::VectorXcd &lam );
  
+
+ Eigen::MatrixXd TimeEvo_RDMD ( const std::vector<double> &t_vec, //definitions are almost the same as in TimeEvo_SPOD
+                            const Eigen::VectorXd &time,
+                            const Eigen::MatrixXd &Coefs,
+                            const Eigen::MatrixXd &Phi,
+                            const std::string &flag_interp);
 
 void nodes_mrDMD_sort( std::vector<node_mrDMD> &nodes ); //Sorting nodes in ordered levels
 

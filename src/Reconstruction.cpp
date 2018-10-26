@@ -176,13 +176,46 @@ Eigen::MatrixXcd Reconstruction_DMD ( const double time, const double dt,
 } 
 
 
+Eigen::MatrixXd TimeEvo_SPOD ( const std::vector<double> &t_vec,
+                            const Eigen::VectorXd &time,
+                            const Eigen::MatrixXd &Coefs,
+                            const Eigen::MatrixXd &Phi,
+                            const Eigen::VectorXd &lam,
+                            const std::string &flag_interp)
+{
+
+    int Nm = Phi.cols();
+    int Nrec = time.size();
+    Eigen::MatrixXd Coefs_interp(Nrec, Nm);
+    std::vector<rbf> surr_coefs = getSurrCoefs( t_vec, Coefs, flag_interp);
+    
+    
+    for ( int i = 0; i < Nrec; i++ )
+    {
+        std::vector<double> t(1, time(i));
+
+        for ( int j = 0; j < Nm; j++)
+            surr_coefs[j].evaluate(t, Coefs_interp(i,j));
+
+    }
+    
+    Eigen::MatrixXd Sig = Eigen::MatrixXd::Zero(Nm, Nm);
+
+    for ( int i = 0; i < Nm; i++ )
+        Sig(i, i) = sqrt(lam(i));
+
+    return Phi*Sig*Coefs_interp.transpose();
+
+}       
+
+
 
 Eigen::MatrixXcd TimeEvo_DMD ( Eigen::VectorXd &time,
                             double dt,
                             const Eigen::VectorXcd &alfa,
                             const Eigen::MatrixXcd &Phi,
                             const Eigen::VectorXcd &lam )
-                            {
+{
 
 int Nm = lam.size();
 Eigen::VectorXcd omega(Nm);
@@ -208,6 +241,34 @@ for ( int k = 0; k < time.size(); k++ )
 return v_rec;
 
 }
+
+
+
+Eigen::MatrixXd TimeEvo_RDMD ( const std::vector<double> &t_vec,
+                            const Eigen::VectorXd &time,
+                            const Eigen::MatrixXd &Coefs,
+                            const Eigen::MatrixXd &Phi,
+                            const std::string &flag_interp)
+{
+
+    int Nm = Phi.cols();
+    int Nrec = time.size();
+    Eigen::MatrixXd Coefs_interp(Nrec, Nm);
+    std::vector<rbf> surr_coefs = getSurrCoefs( t_vec, Coefs, flag_interp);
+    
+    
+    for ( int i = 0; i < Nrec; i++ )
+    {
+        std::vector<double> t(1, time(i));
+
+        for ( int j = 0; j < Nm; j++)
+            surr_coefs[j].evaluate(t, Coefs_interp(i,j));
+
+    }
+
+    return Phi*Coefs_interp.transpose();
+
+}   
 
 
 
@@ -254,16 +315,16 @@ Eigen::MatrixXcd Reconstruction_mrDMD ( const double t_inst, const double dts,
     for ( int i = 0; i < nodes.size(); i++)
     {
         
-        if ( t_inst >= nodes[i].t_begin && t_inst < nodes[i].t_end )
+        if ( (t_inst >= nodes[i].t_begin) && (t_inst < nodes[i].t_end) )
         {
 
-            dt = dts*nodes[i].step;
+            dt = dts*(double)nodes[i].step;
             for ( int j = 0; j < nodes[i].lam.size(); j++ )
             {
 
                 omegaj = std::log(nodes[i].lam(j))/dt;
                 v_rec += std::exp(omegaj*(t_inst - nodes[i].t_begin))*nodes[i].Coefs(j)*nodes[i].Modes.col(j);
-
+                // v_rec += std::exp(omegaj*t_inst)*nodes[i].Coefs(j)*nodes[i].Modes.col(j);
             }
 
         }
