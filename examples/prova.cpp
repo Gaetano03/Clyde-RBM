@@ -19,6 +19,8 @@ std::cout << "floor without double : " << std::floor(50/16) << std::endl;
 std::cout << "floor with double : " << std::floor((double)50/(double)16) << std::endl;
 
 
+
+
 return 0;
 
 }

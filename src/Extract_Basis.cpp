@@ -1,6 +1,5 @@
 #include "Extract_Basis.hpp"
 
-
 int Nmod ( double En, Eigen::VectorXd K_pc )
 {
 
@@ -565,7 +564,7 @@ std::vector<node_mrDMD> mrDMD_basis( Eigen::MatrixXd &snap_set,
     if ( max_levels == 0 )
         rho = 1e6;
 
-    std::vector<int> slow_idx;
+    std::vector<int> slow_idx = {};
 
     for ( int i =0; i < lam_DMD.size(); i++ )
     {

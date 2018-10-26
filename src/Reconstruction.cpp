@@ -1,7 +1,5 @@
 #include "Reconstruction.hpp"
 
-#include "LinearAlgebra/Eigen/Dense"
-#include "LinearAlgebra/Eigen/Eigenvalues"
 
 smartuq::surrogate::RBF_FUNCTION get_key_rbf ( const std::string &key_string ) 
 {

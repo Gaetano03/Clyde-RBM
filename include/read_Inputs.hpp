@@ -9,10 +9,9 @@
 #include <string>
 #include <vector>
 #include <iomanip>
+
 #include "LinearAlgebra/Eigen/Dense"
 #include "LinearAlgebra/Eigen/Eigenvalues"
-
-
 
 // Structure to be filled with information from cfg file
 struct prob_settings 

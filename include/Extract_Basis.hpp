@@ -12,10 +12,10 @@
 #include <cmath>
 #include <iomanip>
 #include <string>
-
 #include "LinearAlgebra/Eigen/Dense"
 #include "LinearAlgebra/Eigen/Eigenvalues"
 #include "LinearAlgebra/Eigen/MatrixFunctions"
+
 
 int Nmod ( double En, Eigen::VectorXd K_pc );
 

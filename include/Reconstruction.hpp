@@ -12,9 +12,8 @@
 #include "Extract_Basis.hpp"
 #include "smartmath.h"
 #include "smart-uq/Surrogates/rbf.h"
-
-class VectorXd;
-class MatrixXd;
+#include "LinearAlgebra/Eigen/Dense"
+#include "LinearAlgebra/Eigen/Eigenvalues"
 
 using namespace smartuq::surrogate;
 

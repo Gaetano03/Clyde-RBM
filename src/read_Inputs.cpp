@@ -1,5 +1,5 @@
-#include "read_Inputs.hpp"
 
+#include "read_Inputs.hpp"
 
 keywords read_keyword_type( const std::string &key_string )
 {
@@ -93,161 +93,161 @@ void Read_cfg ( const std::string filename, prob_settings &settings )
                 case FLAG_PROB:
                 {
                     settings.flag_prob = value;
-                    std::cout << "Problem flag : " << value << std::endl;
+                    //std::cout << "Problem flag : " << value << std::endl;
                     break;
                 }
 
                 case FLAG_DIM:
                 {
                     settings.flag_dim = value;
-                    std::cout << "Dimension flag : " << value << std::endl;
+                    //std::cout << "Dimension flag : " << value << std::endl;
                     break;
                 }
 
                 case NS:
                 {
                     settings.Ns = std::stoi(value);
-                    std::cout << "Number of snapshots : " << value << std::endl;
+                    //std::cout << "Number of snapshots : " << value << std::endl;
                     break;
                 }
 
                 case DS:
                 {
                     settings.Ds = std::stod(value);
-                    std::cout << "Delta between selected snapshots (Equispaced) : " << value << std::endl; 
+                    //std::cout << "Delta between selected snapshots (Equispaced) : " << value << std::endl; 
                     break;
                 }
 
                 case EN:
                 {
                     settings.En = std::stod(value);
-                    std::cout << "Energy content used in the reconstruction : " << value << std::endl;
+                    //std::cout << "Energy content used in the reconstruction : " << value << std::endl;
                     break;
                 }
 
                 case SIGMA:
                 {
                     settings.sigma = std::stod(value);
-                    std::cout << "Sigma for SPOD gaussian filter : " << value << std::endl;
+                    //std::cout << "Sigma for SPOD gaussian filter : " << value << std::endl;
                     break;
                 }
 
                 case NSTART:
                 {
                     settings.nstart = std::stoi(value);
-                    std::cout << "Initial snapshot number : " << value << std::endl;
+                    //std::cout << "Initial snapshot number : " << value << std::endl;
                     break;
                 }
                 
                 case DT_CFD:
                 {
                     settings.Dt_cfd = std::stod(value);
-                    std::cout << "Dt used in CFD simulation : " << value << std::endl;
+                    //std::cout << "Dt used in CFD simulation : " << value << std::endl;
                     break;
                 }
 
                 case INPUT_FILE:
                 {
                     settings.in_file = value;
-                    std::cout << "Input file root name and format : " << value << std::endl;
+                    //std::cout << "Input file root name and format : " << value << std::endl;
                     break;
                 }
 
                 case OUTPUT_FILE:
                 {
                     settings.out_file = value;
-                    std::cout << "Output file root name and format : " << value << std::endl;
+                    //std::cout << "Output file root name and format : " << value << std::endl;
                     break;
                 }
 
                 case NF:
                 {
                     settings.Nf = std::stoi(value);
-                    std::cout << "Filter size for feature extraction : " << value << std::endl;
+                    //std::cout << "Filter size for feature extraction : " << value << std::endl;
                     break;
                 }
 
                 case FLAG_METHOD:
                 {
                     settings.flag_method = value;
-                    std::cout << "Method for feature extraction : " << value << std::endl;
+                    //std::cout << "Method for feature extraction : " << value << std::endl;
                     break;
                 }
 
                 case FLAG_MEAN:
                 {
                     settings.flag_mean = value;
-                    std::cout << "Mean subtraction : " << value << std::endl;
+                    //std::cout << "Mean subtraction : " << value << std::endl;
                     break;
                 }
 
                 case FLAG_BC:
                 {
                     settings.flag_bc = value;
-                    std::cout << "Boundary consition for correlation matrix : " << value << std::endl;
+                    //std::cout << "Boundary consition for correlation matrix : " << value << std::endl;
                     break;
                 }
 
                 case FLAG_FILTER:
                 {
                     settings.flag_filter = value;
-                    std::cout << "Filter type for SPOD : " << value << std::endl;
+                    //std::cout << "Filter type for SPOD : " << value << std::endl;
                     break;
                 }
 
                 case FLAG_WDB_BE:
                 {
                     settings.flag_wdb_be = value;
-                    std::cout << "Write database basis extraction (modes and coefficients) : " << value << std::endl;
+                    //std::cout << "Write database basis extraction (modes and coefficients) : " << value << std::endl;
                     break;
                 }
 
                 case FLAG_REC:
                 {
                     settings.flag_rec = value;
-                    std::cout << "Compute reconstructed field : " << value << std::endl;
+                    //std::cout << "Compute reconstructed field : " << value << std::endl;
                     break;
                 }
 
                 case FLAG_INTERP:
                 {
                     settings.flag_interp = value;
-                    std::cout << "Interpolation technique for rbf : " << value << std::endl;
+                    //std::cout << "Interpolation technique for rbf : " << value << std::endl;
                     break;
                 }
 
                 case RANK_DMD:
                 {
                     settings.r = std::stoi(value);
-                    std::cout << "DMD rank : " << value << std::endl;
+                    //std::cout << "DMD rank : " << value << std::endl;
                     break;
                 }
 
                 case RANK_RDMD:
                 {
                     settings.r_RDMD = std::stoi(value);
-                    std::cout << "Recursive-DMD rank : " << value << std::endl;
+                    //std::cout << "Recursive-DMD rank : " << value << std::endl;
                     break;
                 }
 
                 case DMD_COEF_FLAG:
                 {
                     settings.dmd_coef_flag = value;
-                    std::cout << "DMD coefs method : " << value << std::endl;
+                    //std::cout << "DMD coefs method : " << value << std::endl;
                     break;
                 }
 
                 case MAX_CYCLES:
                 {
                     settings.max_cycles = std::stoi(value);
-                    std::cout << "Max_cycles for mrDMD : " << value << std::endl;
+                    //std::cout << "Max_cycles for mrDMD : " << value << std::endl;
                     break;
                 }
 
                 case MAX_LEVELS:
                 {
                     settings.max_levels = std::stoi(value);
-                    std::cout << "Max_levels for mrDMD : " << value << std::endl;
+                    //std::cout << "Max_levels for mrDMD : " << value << std::endl;
                     break;
                 }
 
@@ -267,7 +267,7 @@ void Read_cfg ( const std::string filename, prob_settings &settings )
 
                     }
 
-                    std::cout << "Times desired for reconstruction: \t";
+                    //std::cout << "Times desired for reconstruction: \t";
                     
                     for ( i = 0; i < settings.t_rec.size(); i++ )
                         std::cout << settings.t_rec[i] << "\t";
@@ -293,7 +293,7 @@ void Read_cfg ( const std::string filename, prob_settings &settings )
 
                     }
 
-                    std::cout << "Number of columns with coordinates: \t";
+                    //std::cout << "Number of columns with coordinates: \t";
                     
                     for ( i = 0; i < settings.Cols_coords.size(); i++ )
                         std::cout << settings.Cols_coords[i] << "\t";
@@ -319,7 +319,7 @@ void Read_cfg ( const std::string filename, prob_settings &settings )
 
                     }
 
-                    std::cout << "Number of columns to process: \t";
+                    //std::cout << "Number of columns to process: \t";
                     
                     for ( i = 0; i < settings.Cols.size(); i++ )
                         std::cout << settings.Cols[i] << "\t";
