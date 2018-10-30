@@ -50,6 +50,8 @@ keywords read_keyword_type( const std::string &key_string )
         return RANK_DMD;
     else if( key_string == "RANK_RDMD" )
         return RANK_RDMD;
+    else if( key_string == "HO_D" )
+        return HO_D;
     else if( key_string == "DMD_COEF_FLAG" )
         return DMD_COEF_FLAG;
     else if( key_string == "MAX_CYCLES" )
@@ -237,6 +239,13 @@ void Read_cfg ( const std::string filename, prob_settings &settings )
                     break;
                 }
 
+                case HO_D:
+                {
+                    settings.d = std::stoi(value);
+                    //std::cout << "DMD coefs method : " << value << std::endl;
+                    break;
+                }
+
                 case MAX_CYCLES:
                 {
                     settings.max_cycles = std::stoi(value);
@@ -269,10 +278,10 @@ void Read_cfg ( const std::string filename, prob_settings &settings )
 
                     //std::cout << "Times desired for reconstruction: \t";
                     
-                    for ( i = 0; i < settings.t_rec.size(); i++ )
-                        std::cout << settings.t_rec[i] << "\t";
+                    //for ( i = 0; i < settings.t_rec.size(); i++ )
+                        //std::cout << settings.t_rec[i] << "\t";
 
-                    std::cout << std::endl;
+                    //std::cout << std::endl;
 
                     break;
                 }
@@ -295,10 +304,10 @@ void Read_cfg ( const std::string filename, prob_settings &settings )
 
                     //std::cout << "Number of columns with coordinates: \t";
                     
-                    for ( i = 0; i < settings.Cols_coords.size(); i++ )
-                        std::cout << settings.Cols_coords[i] << "\t";
+                    //for ( i = 0; i < settings.Cols_coords.size(); i++ )
+                        //std::cout << settings.Cols_coords[i] << "\t";
 
-                    std::cout << std::endl;
+                    ///std::cout << std::endl;
 
                     break;
                 }
@@ -321,10 +330,10 @@ void Read_cfg ( const std::string filename, prob_settings &settings )
 
                     //std::cout << "Number of columns to process: \t";
                     
-                    for ( i = 0; i < settings.Cols.size(); i++ )
-                        std::cout << settings.Cols[i] << "\t";
+                    //for ( i = 0; i < settings.Cols.size(); i++ )
+                        //std::cout << settings.Cols[i] << "\t";
 
-                    std::cout << std::endl;
+                    //std::cout << std::endl;
 
                     break;
                 }

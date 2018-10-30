@@ -16,8 +16,10 @@ int main(int argc, char *argv[]) {
 
     //Reading configuration file
     Read_cfg( filecfg, settings );
-    std::cout << std::endl;
+
     
+    Config_stream ( settings );
+
     // Calculate number of grid points
     int Nr = N_gridpoints ( settings.in_file );
     std::cout << "Number of grid points : " << Nr << std::endl;
@@ -131,9 +133,9 @@ int main(int argc, char *argv[]) {
 
     }
 
-    if ( settings.flag_method == "DMD" || settings.flag_method == "fbDMD" )
+    if ( settings.flag_method == "DMD" || settings.flag_method == "fbDMD" || settings.flag_method == "HODMD" )
     {
-
+        double tol = 1e-8;
         double t_0 = 0.0;
         Eigen::VectorXd t_vec( settings.Ns );
         t_vec(0) = t_0;
@@ -178,8 +180,18 @@ int main(int argc, char *argv[]) {
                             settings.r );
         }
 
-        int Nm = Phi.cols();
+        if ( settings.flag_method == "HODMD")
+        {
+            Phi = HODMD_basis( sn_set,
+                            lambda_DMD,
+                            eig_vec_DMD,
+                            tol,
+                            settings.d);
+        }
 
+
+        int Nm = Phi.cols();
+        std::cout << "Number of modes extracted : " << Nm << std::endl;
         // if ( settings.r == 0)
         // {
         //     Nm = SVHT ( lambda_POD, settings.Ns, sn_set.rows() );
@@ -197,8 +209,9 @@ int main(int argc, char *argv[]) {
         for ( int i = 0; i < Nm; i++ )
                 omega(i) = std::log(lambda_DMD(i))/(settings.Dt_cfd*settings.Ds);
 
-        // std::cout << " DMD eigen-values :\n " << omega << std::endl;
-        std::cout << " DMD eigen-values :\n " << lambda_DMD << std::endl;
+        // std::cout << " DMD omegas :\n " << omega << std::endl;
+        // std::cout << " DMD eigen-values :\n " << lambda_DMD << std::endl;
+
 
         std::cout << "Calculating coefficients DMD ... " << "\t";
 

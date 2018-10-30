@@ -92,6 +92,9 @@ int Not_zero( Eigen::VectorXd lam )
         count ++;
     }
 
+    if ( eps > 1e-15 )
+        return count;
+    
     return (count - 1);
 }
 
@@ -332,7 +335,7 @@ Eigen::MatrixXcd DMD_basis ( const Eigen::MatrixXd &snap_set,
     Eigen::MatrixXd Atilde = U.leftCols(Nm).transpose()*snap_set.rightCols(Ns)*
                                 eig_vec_POD.leftCols(Nm)*Sig_inv.block(0,0,Nm,Nm);
     
-    std::cout << "Atilde :\n " << Atilde << std::endl << std::endl; 
+    // std::cout << "Atilde :\n " << Atilde << std::endl << std::endl; 
 
     //Eigen::VectorXcd Full_lam;
     if ( Atilde.size() == 1 && Atilde(0,0) == 0.0 )
@@ -468,7 +471,6 @@ Eigen::VectorXcd Calculate_Coefs_DMD_exact ( const Eigen::MatrixXd &sn_set,  //m
     Eigen::MatrixXcd V_sqc = V_sq.conjugate();
 
     Eigen::MatrixXcd P = Phi_sq.cwiseProduct(V_sqc);
-
     Eigen::MatrixXcd appo = V_and*sn_set.transpose()*Phi;
     Eigen::VectorXcd dum = appo.diagonal();
     Eigen::VectorXcd dumc = dum.conjugate();
@@ -1001,7 +1003,7 @@ Eigen::MatrixXcd fbDMD_basis ( const Eigen::MatrixXd &snap_set,
     std::cout << "Determinant bAtilde : " << bAtilde.determinant() << std::endl;
 
     Eigen::MatrixXd Atilde = Atilde_sq.sqrt();
-    std::cout << "Atilde :\n " << Atilde << std::endl;
+    // std::cout << "Atilde :\n " << Atilde << std::endl;
 
     // for ( int i = 0; i < fAtilde.rows(); i++ )
     // {
@@ -1031,5 +1033,82 @@ Eigen::MatrixXcd fbDMD_basis ( const Eigen::MatrixXd &snap_set,
 
     //Standard DMD
     // return U*eig_vec;
+
+}
+
+
+Eigen::MatrixXcd HODMD_basis( const Eigen::MatrixXd &snap_set,
+                            Eigen::VectorXcd &lambda,
+                            Eigen::MatrixXcd &eig_vec,
+                            const double tol,
+                            const int d)
+{
+
+    int Ns = snap_set.cols();
+    Eigen::BDCSVD<Eigen::MatrixXd> svd( snap_set, 
+                                        Eigen::ComputeThinU | Eigen::ComputeThinV );
+    Eigen::VectorXd s = svd.singularValues();
+
+    int N_red1 = 0;
+    double eps1 = 0.0;
+     
+    while ( eps1 < tol && N_red1 < s.size() )
+    {
+        eps1 = s.tail(N_red1 + 1).sum()/s.sum();
+        N_red1++;
+     
+    }
+
+    int N_svd = s.size() - (N_red1 - 1);
+
+    std::cout << std::endl;
+    std::cout << " First reduction size : " << N_red1 - 1 << " out of " << Ns << std::endl; 
+
+    Eigen::MatrixXd T = svd.matrixV();
+    Eigen::MatrixXd U = svd.matrixU();
+    Eigen::MatrixXd Sigma = Eigen::MatrixXd::Zero(N_svd,N_svd);
+
+    for ( int i = 0; i < N_svd; i++ )
+        Sigma(i,i) = s(i);
+
+    Eigen::MatrixXd sn_set_hat = Sigma*T.leftCols(N_svd).transpose();
+    Eigen::MatrixXd sn_set_hat_ho(d*N_svd, Ns - d);
+
+    for ( int i = 0; i < (Ns - d); i++ )
+    {
+        for( int j = 0; j < d; j++ )
+            sn_set_hat_ho.col(i).segment(j*N_svd, N_svd) = sn_set_hat.col(j+i);
+    } 
+
+    Eigen::BDCSVD<Eigen::MatrixXd> svd2( sn_set_hat_ho.leftCols(sn_set_hat_ho.cols()-1), 
+                                        Eigen::ComputeThinU | Eigen::ComputeThinV );
+    Eigen::VectorXd s2 = svd2.singularValues();
+    Eigen::MatrixXd T_hat_ho = svd2.matrixV();
+    Eigen::MatrixXd U_hat_ho = svd2.matrixU();
+
+    eps1 = 0.0;
+    N_red1 = 0;
+
+    while ( eps1 < tol && N_red1 < s2.size() )
+    {
+        eps1 = s2.tail(N_red1 + 1).sum()/s2.sum();
+        N_red1++;
+     
+    }
+
+    std::cout << " Second reduction size : " << N_red1 - 1 << " out of " << s2.size() << std::endl;
+    int N_svd2 = s2.size() - (N_red1 - 1);
+    Eigen::MatrixXd Sigma2 = Eigen::MatrixXd::Zero(N_svd2, N_svd2);
+
+    for ( int i = 0; i < N_svd2; i++ )
+        Sigma2(i,i) = s2(i);
+
+    Eigen::MatrixXd R_hat = sn_set_hat_ho.rightCols(sn_set_hat_ho.cols()-1)*T_hat_ho.leftCols(N_svd2)*Sigma2.inverse()*U_hat_ho.leftCols(N_svd2).transpose();
+    Eigen::EigenSolver<Eigen::MatrixXd> es(R_hat); 
+    lambda = es.eigenvalues(); 
+    Eigen::MatrixXcd Full_eig_vec = es.eigenvectors();
+    eig_vec = Full_eig_vec.block(0,0,N_svd2,Full_eig_vec.cols());
+
+    return U.leftCols(N_svd2)*eig_vec;
 
 }

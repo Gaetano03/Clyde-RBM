@@ -46,12 +46,17 @@ struct prob_settings
     //------Parameters for DMD-----------
     int r;                      //rank of standard DMD
                                 //if r=0 SVHT is used
-    int r_RDMD;                 //Number of modes for recursive DMD
     std::string dmd_coef_flag;  //method for coefficients calculation
     
-    //just for mrDMD
+    //only for mrDMD
     int max_cycles;
     int max_levels;
+
+    //only for hoDMD
+    int d;                      //level of high order approximation
+
+    //only for RDMD
+    int r_RDMD;                 //Number of modes for recursive DMD
 
     //----Parameter for Reconstruction---------
     std::string flag_rec;           //Activate-deactivate field reconstruction 
@@ -84,6 +89,7 @@ enum keywords
                 RANK_DMD,
                 DMD_COEF_FLAG,
                 RANK_RDMD,
+                HO_D,
                 MAX_LEVELS,
                 MAX_CYCLES
             };

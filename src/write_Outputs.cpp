@@ -4,8 +4,44 @@
 void Config_stream ( prob_settings settings )
 {
 
-std::cout << std::endl;
+    std::cout << " Number of snapshots : " << settings.Ns << std::endl;
+    std::cout << " Delta T between snapshots ( only EQUISPACED for now) : " << settings.Dt_cfd*settings.Ds << std::endl;
+    std::cout << " Starting snapshot index : " << settings.nstart << std::endl;
+    std::cout << " Data-type to be processed : " << settings.flag_prob << std::endl << std::endl;
 
+    std::cout << "----------- Performing " << settings.flag_method << " --------------" << std::endl;
+    std::cout << " Subtracting mean from snapshot = " << settings.flag_mean << std::endl << std::endl;
+
+    if ( settings.flag_method == "SPOD" )
+    {
+        std::cout << " Filter size : " << settings.Nf << std::endl;
+        std::cout << " Filter type : " << settings.flag_filter << std::endl;
+        std::cout << " Energy level desired : " << settings.En*100 << "%" << std::endl;
+    }   
+
+    if ( settings.flag_method == "DMD" || settings.flag_method == "fbDMD" || settings.flag_method == "HODMD" || settings.flag_method == "mrDMD" || settings.flag_method == "RDMD")
+    {
+        std::cout << " Rank for the reduced dynamic (if -1 pick all modes, if 0 do SVHT) : " << settings.r << std::endl;
+        std::cout << " Method to compute coefficients : " << settings.dmd_coef_flag << std::endl;
+    }
+
+    if ( settings.flag_method == "RDMD" )
+    {
+        std::cout << " Rank for the RDMD (if 0 do the recursion until 3*Ns) : " << settings.dmd_coef_flag << std::endl;
+    }
+
+    if ( settings.flag_method == "mrDMD" )
+    {
+        std::cout << " Max levels of the multi resolution : " << settings.max_levels << std::endl;
+        std::cout << " Number of samples per time bin : " << settings.max_cycles*4 << std::endl;
+    }
+
+    if ( settings.flag_method == "HODMD" )
+    {
+        std::cout << " Number of levels for high order : " << settings.d << std::endl;
+    }
+
+    std::cout << std::endl;
 
 
 }

@@ -122,4 +122,13 @@ Eigen::MatrixXcd fbDMD_basis ( const Eigen::MatrixXd &snap_set,
                             Eigen::MatrixXcd &eig_vec,
                             const int r );
 
+
+//High order DMD
+Eigen::MatrixXcd HODMD_basis( const Eigen::MatrixXd &snap_set,  //Initial set of snapshots
+                            Eigen::VectorXcd &lam,               //High order Eigenvalues 
+                            Eigen::MatrixXcd &eig_vec,           //High order eigenvectors
+                            const double tol,                   //tolerance for svd (see Soledad for definition)
+                            const int d);                       //levels of high order DMD
+
+
 #endif //EXTRACT_BASIS_HPP
