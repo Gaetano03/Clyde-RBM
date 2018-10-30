@@ -27,7 +27,8 @@ void Config_stream ( prob_settings settings )
 
     if ( settings.flag_method == "RDMD" )
     {
-        std::cout << " Rank for the RDMD (if 0 do the recursion until 3*Ns) : " << settings.dmd_coef_flag << std::endl;
+        std::cout << " Rank for the RDMD (if 0 do the recursion until the desired energetic content ( max = 3*Ns)) : " << settings.r_RDMD << std::endl;
+        std::cout << " Energy level desired (to be considered only if rank = 0): " << settings.En*100 << "%" << std::endl;
     }
 
     if ( settings.flag_method == "mrDMD" )
@@ -42,7 +43,6 @@ void Config_stream ( prob_settings settings )
     }
 
     std::cout << std::endl;
-
 
 }
 
