@@ -16,10 +16,10 @@ int main( int argc, char *argv[] )
     std::string filecfg = argv[1];
     // std::string mode = argv[2];
     prob_settings settings;
-    int ndim = 2;   //dimension of the problem (1D/2D/3D)
 
     //Reading configuration file
     Read_cfg( filecfg, settings );
+    int ndim = settings.ndim;   //dimension of the problem (1D/2D/3D)
     // Config_stream ( settings );
     int Nm_POD, Nm_DMD, Nm_mrDMD, Nm_RDMD;
     std::vector<int> Nm_SPOD = {};
@@ -40,7 +40,7 @@ int main( int argc, char *argv[] )
                                         settings.in_file,
                                         settings.flag_prob);
 
-    double tol_rec = 0.05;
+    double tol_rec = settings.tol;
     double tol = 1e-1;
     double t_0 = (double)settings.nstart*settings.Dt_cfd;
     Eigen::VectorXd t_vec( settings.Ns );
@@ -411,7 +411,7 @@ int main( int argc, char *argv[] )
     error_methods << "Err_DMD" << "\t";
     error_methods << "Err_mrDMD" << "\t";
     error_methods << "Err_RDMD" << "\n";
-    
+
    
     for( int j = 0; j < settings.Ns; j++ ) 
     {
@@ -459,7 +459,7 @@ int main( int argc, char *argv[] )
 
 //Adaptive reconstruction on each selected time step
     int Nf_SPOD = 0;
-    
+   
     for ( int i = 0; i < settings.t_rec.size(); i++ )
     {
         std::cout << " Adaptive reconstruction at time : " << settings.t_rec[i] << std::endl;

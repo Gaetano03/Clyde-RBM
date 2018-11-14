@@ -14,6 +14,8 @@ keywords read_keyword_type( const std::string &key_string )
         return SIGMA;
     else if( key_string == "NSTART" )
         return NSTART;
+    else if( key_string == "NDIM" )
+        return NDIM;
     else if( key_string == "DT_CFD" )
         return DT_CFD;
     else if( key_string == "FLAG_DIM" )
@@ -58,6 +60,8 @@ keywords read_keyword_type( const std::string &key_string )
         return MAX_CYCLES;
     else if( key_string == "MAX_LEVELS" )
         return MAX_LEVELS;
+    else if( key_string == "TOL" )
+        return TOL;
     else
     {
         std::cout << "Something wrong in cfg file" << std::endl;
@@ -134,9 +138,23 @@ void Read_cfg ( const std::string filename, prob_settings &settings )
                     break;
                 }
 
+                case TOL:
+                {
+                    settings.tol = std::stod(value);
+                    //std::cout << "Sigma for SPOD gaussian filter : " << value << std::endl;
+                    break;
+                }                
+
                 case NSTART:
                 {
                     settings.nstart = std::stoi(value);
+                    //std::cout << "Initial snapshot number : " << value << std::endl;
+                    break;
+                }
+
+                case NDIM:
+                {
+                    settings.ndim = std::stoi(value);
                     //std::cout << "Initial snapshot number : " << value << std::endl;
                     break;
                 }

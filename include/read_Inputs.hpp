@@ -21,6 +21,7 @@ struct prob_settings
     int Ns;                         //Number of snapshots
     int Ds;                         //Delta between snapshots
     int nstart;                     //starting snapshot number
+    int ndim;
     std::string in_file;            //Input filename
     std::string out_file;           //Output filename (for reconstruction)
     std::string flag_dim;           //Problem dimension (2D/3D)
@@ -63,6 +64,8 @@ struct prob_settings
     std::string flag_interp;        //Interpolation technique for rbf
     std::vector<double> t_rec;                   //times desired for reconstruction
 
+    double tol;                     //Error tolerance for adaptive reconstruction
+
 };
 
 
@@ -71,6 +74,7 @@ enum keywords
             { 
                 NS, DS, EN, NF, SIGMA,
                 NSTART,
+                NDIM,
                 DT_CFD,
                 FLAG_DIM,
                 FLAG_PROB,
@@ -91,7 +95,8 @@ enum keywords
                 RANK_RDMD,
                 HO_D,
                 MAX_LEVELS,
-                MAX_CYCLES
+                MAX_CYCLES,
+                TOL
             };
 
 
