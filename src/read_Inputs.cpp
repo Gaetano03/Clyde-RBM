@@ -500,3 +500,53 @@ Eigen::MatrixXd read_col( std::string filename, int Nr, std::vector<int> Cols )
     return field;
   
 }
+
+
+Eigen::MatrixXd read_modes( std::string filename, int Nr, int r_RDMD )
+{
+    Eigen::MatrixXd field (Nr, r_RDMD);
+    std::ifstream Modes_data;
+    Modes_data.open( filename );
+
+        if ( !Modes_data.is_open() )
+    {
+        std::cout << "File : " << filename << " not found" << std::endl;    
+        exit (EXIT_FAILURE);
+    }
+
+    std::string line_flow_data ;
+
+    // Read row of headers
+    getline( Modes_data, line_flow_data );
+
+    int n_row = 0;
+
+    while ( getline( Modes_data, line_flow_data ) )
+    {
+
+        Eigen::RowVectorXd point(r_RDMD);
+        std::istringstream iss(line_flow_data);
+        std::string token;
+        double rubbish;
+        int count = 0, c = 0; 
+
+        while( getline( iss, token, ' ') )
+        {
+            rubbish = std::stod(token);
+
+            if ( count < r_RDMD )
+                point(count) = rubbish;
+            
+            count ++;
+        } 
+
+        field.row(n_row) = point; 
+        n_row++;
+
+    }
+
+    Modes_data.close();
+
+    return field;
+
+}

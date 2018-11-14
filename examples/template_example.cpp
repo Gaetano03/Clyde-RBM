@@ -161,6 +161,8 @@ int main(int argc, char *argv[]) {
 
         std::cout << "Extracting basis ... " << "\t";        
         Eigen::MatrixXcd Phi;
+        Eigen::VectorXcd alfa;
+        Eigen::MatrixXcd Alfas;
 
         if ( settings.flag_method == "DMD")
         {    
@@ -185,6 +187,7 @@ int main(int argc, char *argv[]) {
             Phi = HODMD_basis( sn_set,
                             lambda_DMD,
                             eig_vec_DMD,
+                            alfa,
                             tol,
                             settings.d);
         }
@@ -212,8 +215,9 @@ int main(int argc, char *argv[]) {
         // std::cout << " DMD omegas :\n " << omega << std::endl;
         // std::cout << " DMD eigen-values :\n " << lambda_DMD << std::endl;
 
-
-        std::cout << "Calculating coefficients DMD ... " << "\t";
+        if ( settings.flag_method == "DMD" || settings.flag_method == "fbDMD" ) 
+        {
+            std::cout << "Calculating coefficients DMD ... " << "\t";
 
         //Calculating coefficients solving optimization problem
         // Eigen::MatrixXcd alfa = Calculate_Coefs_DMD ( eig_vec_DMD,
@@ -222,80 +226,80 @@ int main(int argc, char *argv[]) {
                                             // lambda_POD,
                                             // settings.Ns - 1 );
 
-        Eigen::VectorXcd alfa;
-        Eigen::MatrixXcd Alfas;
-        if ( settings.dmd_coef_flag == "OPT" )
-        {
-            alfa = Calculate_Coefs_DMD_exact ( sn_set.leftCols(settings.Ns-1),  //matrix of first Ns-1 snaps 
-                                                                lambda_DMD,  //slow eigenvalues
-                                                                Phi ); //slow exact DMD modes
-        }
-        
-        //Calculating coefficients with ls
-        else if ( settings.dmd_coef_flag == "LS" )
-        {
-            Eigen::VectorXcd b = Eigen::VectorXcd::Zero(sn_set.rows()); 
-            for ( int k = 0; k < sn_set.rows(); k++ )
-                b(k).real(sn_set(k,0)); 
 
-            alfa = Phi.jacobiSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(b);
-
-        }
-        //Calculating coefficients with Hybrid method
-        else if ( settings.dmd_coef_flag == "HYBRID" )
-        {
-        
-            Alfas = Calculate_Coefs_Matrix_DMD ( sn_set,
-                                                Phi,
-                                                omega,
-                                                t_0,
-                                                settings.Dt_cfd*settings.Ds );
-            
-    
-            std::cout << "Writing training points ..." << std::endl;
-
-            std::ofstream train_real;
-            train_real.open("train_real.dat");
-
-
-            for ( int k = 0; k < settings.Ns; k++ )
+            if ( settings.dmd_coef_flag == "OPT" )
             {
-            
-                for( int j = 0; j < Alfas.cols(); j++ ) 
-                    train_real << Alfas(k,j).real() << " ";   
-
-            train_real << std::endl;
-
+                alfa = Calculate_Coefs_DMD_exact ( sn_set.leftCols(settings.Ns-1),  //matrix of first Ns-1 snaps 
+                                                                    lambda_DMD,  //slow eigenvalues
+                                                                    Phi ); //slow exact DMD modes
             }
 
-            train_real.close();
-
-
-            std::ofstream train_imag;
-            train_imag.open("train_imag.dat");
-
-
-            for ( int k = 0; k < settings.Ns; k++ )
+            //Calculating coefficients with ls
+            else if ( settings.dmd_coef_flag == "LS" )
             {
-            
-                for( int j = 0; j < Alfas.cols(); j++ ) 
-                    train_imag << Alfas(k,j).imag() << " ";   
+                Eigen::VectorXcd b = Eigen::VectorXcd::Zero(sn_set.rows()); 
+                for ( int k = 0; k < sn_set.rows(); k++ )
+                    b(k).real(sn_set(k,0)); 
 
-            train_imag << std::endl;
+                alfa = Phi.jacobiSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(b);
 
             }
+            //Calculating coefficients with Hybrid method
+            else if ( settings.dmd_coef_flag == "HYBRID" )
+            {
+            
+                Alfas = Calculate_Coefs_Matrix_DMD ( sn_set,
+                                                    Phi,
+                                                    omega,
+                                                    t_0,
+                                                    settings.Dt_cfd*settings.Ds );
 
-            train_imag.close();
 
+                std::cout << "Writing training points ..." << std::endl;
+
+                std::ofstream train_real;
+                train_real.open("train_real.dat");
+
+
+                for ( int k = 0; k < settings.Ns; k++ )
+                {
+                
+                    for( int j = 0; j < Alfas.cols(); j++ ) 
+                        train_real << Alfas(k,j).real() << " ";   
+
+                train_real << std::endl;
+
+                }
+
+                train_real.close();
+
+
+                std::ofstream train_imag;
+                train_imag.open("train_imag.dat");
+
+
+                for ( int k = 0; k < settings.Ns; k++ )
+                {
+                
+                    for( int j = 0; j < Alfas.cols(); j++ ) 
+                        train_imag << Alfas(k,j).imag() << " ";   
+
+                train_imag << std::endl;
+
+                }
+
+                train_imag.close();
+
+            }
+            else
+            {
+                std::cout << "Method to Calculate DMD coefficients not available! " << std::endl;
+                std::cout << "Exiting ... " << std::endl;
+                std::exit( EXIT_FAILURE );
+            }
+
+            std::cout << " Done! " << std::endl << std::endl;
         }
-        else
-        {
-            std::cout << "Method to Calculate DMD coefficients not available! " << std::endl;
-            std::cout << "Exiting ... " << std::endl;
-            std::exit( EXIT_FAILURE );
-        }
-
-        std::cout << " Done! " << std::endl << std::endl;
 
         if ( settings.flag_wdb_be == "YES" && settings.dmd_coef_flag!= "HYBRID" )
         {
@@ -536,8 +540,8 @@ int main(int argc, char *argv[]) {
 
         if ( settings.flag_wdb_be == "YES" )
         {
-            std::cout << "Writing modes ..." << "\t";
-            write_modes_sPOD ( Phi, Coords, settings.flag_prob );
+            std::cout << "Writing modes ..." << "\t"; //Writing one mode for all variables (ex (u,v)---> Phi1 = (Phiu1;Phiv1))
+            write_modes ( Phi );
             std::cout << "Complete!" << std::endl;
 
             // std::cout << "Writing Coefficients ..." << "\t";

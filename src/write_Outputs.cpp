@@ -52,7 +52,7 @@ void write_modes_sPOD ( const Eigen::MatrixXd &Phi_cut,
                         const Eigen::MatrixXd &Coords, 
                         std::string flag_prob )
 {
-
+    
     int Nr = Coords.rows(); 
     std::string filename = "Modes_sPOD.dat";
     std::ofstream flow_data;
@@ -727,5 +727,35 @@ void write_Reconstructed_fields ( Eigen::MatrixXd Rec,
 
 
 
+void write_modes ( const Eigen::MatrixXd &Phi_cut )
+{
+    
+    int Nr = Phi_cut.rows(); 
+    std::string filename = "Modes.dat";
+    std::ofstream flow_data;
+    flow_data.open(filename.c_str()); 
+
+    // Write row of Headers
+    std::string phi;
+
+    for ( int i = 0; i < Phi_cut.cols(); i++ )
+    {
+        phi = "\"Phi_" + std::to_string(i+1) + "\""; 
+        flow_data << phi << " ";
+    }
+
+    flow_data << std::endl;
+
+    //Write fields
+    for ( int i = 0; i < Nr; i++ )
+    {    
+        for (int j = 0; j < Phi_cut.cols(); j++)
+            flow_data << std::setprecision(12) << std::scientific << Phi_cut(i,j) <<  " ";           
+
+        flow_data << std::endl;
+    }
+    // Close file
+    flow_data.close();
 
 
+}

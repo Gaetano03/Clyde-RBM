@@ -12,3 +12,6 @@ target_link_libraries (LaminarAirfoil clyde-rbm ${MANDATORY_LIBRARIES})
 
 add_executable (prova prova.cpp)
 target_link_libraries (prova clyde-rbm ${MANDATORY_LIBRARIES})
+
+add_executable (Compute_best_Method Compute_best_Method.cpp)
+target_link_libraries (Compute_best_Method clyde-rbm ${MANDATORY_LIBRARIES})

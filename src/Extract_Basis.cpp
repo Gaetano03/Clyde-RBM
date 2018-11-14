@@ -152,6 +152,38 @@ bool check_linear_consistency( Eigen::MatrixXd X, Eigen::MatrixXd Y, Eigen::Matr
 }
 
 
+std::string method_selected ( int n, int &Nf_SPOD, std::vector<int> Nf )
+{
+
+    if ( (n > -1) && (n < (Nf.size() + 1)) )
+    {
+        if ( n == 0 )
+            Nf_SPOD = 0;
+        
+        for ( int i = 1; i < Nf.size()+1; i++ )
+        {
+            if ( n == i )
+                Nf_SPOD = Nf[i-1];
+        }
+                
+        return "SPOD";
+    }
+    else if ( n == (Nf.size() + 1) )
+        return "DMD";
+    else if ( n == (Nf.size() + 2) )
+        return "mrDMD";
+    else if ( n == (Nf.size() + 3) )
+        return "RDMD";
+    else 
+    {
+        std::cout << "Bad value for index " << std::endl;
+        return "NONE";
+    }
+
+}
+
+
+
 Eigen::MatrixXd SPOD_basis( const Eigen::MatrixXd &snap_set,
                                 Eigen::VectorXd &lam,
                                 Eigen::VectorXd &K_pc,
@@ -323,7 +355,7 @@ Eigen::MatrixXcd DMD_basis ( const Eigen::MatrixXd &snap_set,
     Eigen::MatrixXcd phi = Eigen::MatrixXd::Zero(snap_set.rows(), Nm);
     if ( Nm == 0)
     {
-        std::cout << " Rank is zero, no suitable data to define low order evolution " << std::endl;
+        std::cout << " Rank is zero, bad data to define low order evolution " << std::endl;
         lam = Eigen::VectorXd::Zero(0);
         eig_vec = Eigen::MatrixXd::Zero(0,0);
 
@@ -331,7 +363,7 @@ Eigen::MatrixXcd DMD_basis ( const Eigen::MatrixXd &snap_set,
 
     }
 
-    std::cout << "Singular Values : \n" << lam_POD.head(Nm) << std::endl;
+    // std::cout << "Singular Values : \n" << lam_POD.head(Nm) << std::endl;
     Eigen::MatrixXd Atilde = U.leftCols(Nm).transpose()*snap_set.rightCols(Ns)*
                                 eig_vec_POD.leftCols(Nm)*Sig_inv.block(0,0,Nm,Nm);
     
@@ -648,9 +680,9 @@ std::vector<node_mrDMD> mrDMD_basis( Eigen::MatrixXd &snap_set,
     else        //initialize b_opt  and Psi as empty vector and matrix
     {
 
-        b_opt = Eigen::VectorXcd::Zero(0);
+        b_opt = Eigen::VectorXcd::Zero(lam_slw.size());
         // alfas = Eigen::MatrixXcd::Zero(0,0);
-        Psi = Eigen::MatrixXcd::Zero(0,0);
+        Psi = Eigen::MatrixXcd::Zero(lam_slw.size(),bin_size);
         D_dmd = Eigen::MatrixXcd::Zero(N,bin_size);
 
     }
@@ -1040,8 +1072,9 @@ Eigen::MatrixXcd fbDMD_basis ( const Eigen::MatrixXd &snap_set,
 Eigen::MatrixXcd HODMD_basis( const Eigen::MatrixXd &snap_set,
                             Eigen::VectorXcd &lambda,
                             Eigen::MatrixXcd &eig_vec,
+                            Eigen::VectorXcd &Coefs,
                             const double tol,
-                            const int d)
+                            const int d )
 {
 
     int Ns = snap_set.cols();
@@ -1108,6 +1141,12 @@ Eigen::MatrixXcd HODMD_basis( const Eigen::MatrixXd &snap_set,
     lambda = es.eigenvalues(); 
     Eigen::MatrixXcd Full_eig_vec = es.eigenvectors();
     eig_vec = Full_eig_vec.block(0,0,N_svd2,Full_eig_vec.cols());
+
+    Coefs = Calculate_Coefs_DMD_exact ( sn_set_hat.leftCols(sn_set_hat.cols() - 1),  
+                                        lambda,  
+                                        eig_vec );
+
+
 
     return U.leftCols(N_svd2)*eig_vec;
 

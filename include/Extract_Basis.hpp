@@ -54,7 +54,10 @@ Eigen::MatrixXd nullspace( Eigen::VectorXd s, Eigen::MatrixXd vh, const double a
 
 
 //Check if linear consistency is verified ( null(X) included in null(Y) with X = [x_0, x_1, ..., x_(N-1)], Y = [x_1, x_2, ..., x_N])
-bool check_linear_consistency( Eigen::MatrixXd X, Eigen::MatrixXd Y, Eigen::MatrixXd Nullspace, const double atol = 1e-13, const double rtol = 0);
+bool check_linear_consistency( Eigen::MatrixXd X, Eigen::MatrixXd Y, Eigen::MatrixXd Nullspace, const double atol = 1e-13, const double rtol = 0 );
+
+
+std::string method_selected ( int n, int &Nf_SPOD, std::vector<int> Nf );
 
 //SPOD/POD basis extraction (calculates also coefficients)
 Eigen::MatrixXd SPOD_basis( const Eigen::MatrixXd &snap_set,
@@ -127,8 +130,9 @@ Eigen::MatrixXcd fbDMD_basis ( const Eigen::MatrixXd &snap_set,
 Eigen::MatrixXcd HODMD_basis( const Eigen::MatrixXd &snap_set,  //Initial set of snapshots
                             Eigen::VectorXcd &lam,               //High order Eigenvalues 
                             Eigen::MatrixXcd &eig_vec,           //High order eigenvectors
+                            Eigen::VectorXcd &Coefs,
                             const double tol,                   //tolerance for svd (see Soledad for definition)
-                            const int d);                       //levels of high order DMD
+                            const int d );                       //levels of high order DMD
 
 
 #endif //EXTRACT_BASIS_HPP

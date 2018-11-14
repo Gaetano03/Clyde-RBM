@@ -41,6 +41,6 @@ void write_Reconstructed_fields ( const Eigen::MatrixXd Rec,
                                     const int nt );
 
 
-
+void write_modes ( const Eigen::MatrixXd &Phi_cut );
 
 #endif // WRITE_OUTPUTS_HPP

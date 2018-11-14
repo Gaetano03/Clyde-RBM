@@ -28,6 +28,12 @@ m << 1.0, 5.0, 3.2,
     2.0, 8.0, 6.3;
 
 
+Eigen::MatrixXd cc = Eigen::MatrixXd::Zero(5,5);
+
+cc = m;
+
+std::cout << "Matrix cc:\n" << cc << std::endl; 
+
 Eigen::BDCSVD<Eigen::MatrixXd> svd( m, Eigen::ComputeThinU | Eigen::ComputeThinV );
 Eigen::VectorXd s = svd.singularValues();
 
