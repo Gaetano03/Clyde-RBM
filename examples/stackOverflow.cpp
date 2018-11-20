@@ -154,6 +154,42 @@ for ( int i = 0; i < Nsnap; i ++ )
 
 
 std::string flag_coef = "OPT";
+
+
+if( method == "HODMD")
+{
+
+    Eigen::VectorXcd Coefs;
+    double tol = 1e-16;
+    int d = 5;
+    Eigen::MatrixXcd Phi =  HODMD_basis( sn_set,
+                                        lam,
+                                        eig_vec,
+                                        Coefs,
+                                        tol,
+                                        d );
+
+
+    std::cout << "Computing Reconstruction... " << std::endl;
+
+    Rec = TimeEvo_DMD ( tnew,
+                        dt,
+                        Coefs,
+                        Phi,
+                        lam );
+
+    std::cout << "Done" << std::endl;
+    
+
+
+}
+
+
+
+
+
+
+
 if( method == "mrDMD")
 {
     int max_levels = 10;

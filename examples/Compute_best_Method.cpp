@@ -11,10 +11,17 @@ int main( int argc, char *argv[] )
     std::cout << "-----------RBM-Clyde Adaptive Model starts-------------" << std::endl << std::endl;
     //std::cout << "-----------Computing best method-------" << std::endl;
 
-    std::cout << " Initializing common variables " << std::endl << std::endl;
+    std::cout << "Initializing common variables " << std::endl << std::endl;
 
     std::string filecfg = argv[1];
     // std::string mode = argv[2];
+    double gamma = 1.4;     //ratio of specific heats;
+    double R = 287.058;     //gas constant;
+    double Mach = 0.2;      //Mach number;
+    double T = 300;         //Temperature;
+
+    double Vinf = Mach*std::sqrt(gamma*R*T);
+
     prob_settings settings;
 
     //Reading configuration file
@@ -50,7 +57,7 @@ int main( int argc, char *argv[] )
         t_vec(i) = t_vec(i-1) + settings.Dt_cfd*settings.Ds;
 
     std::cout << std::endl;
-    std::cout << "Initialized vector of times " << std::endl;
+    std::cout << "Initialized vector of times " << std::endl << std::endl;
 
     Eigen::VectorXd mean = sn_set.rowwise().mean();
     Eigen::VectorXd norm_sn_set = Eigen::VectorXd::Zero(settings.Ns);
@@ -63,6 +70,7 @@ int main( int argc, char *argv[] )
 
     
     Eigen::VectorXd Err_POD_time = Eigen::VectorXd::Zero(settings.Ns);
+    Eigen::VectorXd J_POD_time = Eigen::VectorXd::Zero(settings.Ns);
 
     std::vector<int> Nf(4);
     Nf[0] = std::ceil(settings.Ns/10.0);
@@ -70,6 +78,7 @@ int main( int argc, char *argv[] )
     Nf[2] = std::ceil(2.0*settings.Ns/3.0);
     Nf[3] = settings.Ns;
     Eigen::MatrixXd Err_SPOD_time = Eigen::MatrixXd::Zero(settings.Ns,Nf.size());
+    Eigen::MatrixXd J_SPOD_time = Eigen::MatrixXd::Zero(settings.Ns,Nf.size());
 
 
 //Defining common scope for POD and SPOD
@@ -91,7 +100,7 @@ int main( int argc, char *argv[] )
                                     settings.flag_filter,  
                                     settings.sigma);
 
-            std::cout << " Done! " << std::endl << std::endl;
+            std::cout << " Done! " << std::endl;
 
 
 
@@ -99,6 +108,7 @@ int main( int argc, char *argv[] )
             int Nrec = Nmod( settings.En, K_pc);
             Eigen::MatrixXd Sig = Eigen::MatrixXd::Zero(Nrec, Nrec);
             std::cout << "Number of modes for the desired energy content : " << Nrec << std::endl;
+            std::cout << "Computing Error in time ..." << std::endl;
 
             // for ( int i = 0; i < settings.Ns; i++ )
             //     sn_set.col(i) += mean;
@@ -111,15 +121,24 @@ int main( int argc, char *argv[] )
             for ( int i = 0; i < settings.Ns; i++ )
             {
                 for ( int j = 0; j < ndim*Nr; j++ )
-                    if ( sn_set(j,i) < tol )
-                        Err_POD_time(i) += Err_POD_map(j,i)*Err_POD_map(j,i);
-                    else    
-                        Err_POD_time(i) += Err_POD_map(j,i)*Err_POD_map(j,i);// /(sn_set(j,i)*sn_set(j,i));
-
+                    Err_POD_time(i) += Err_POD_map(j,i)*Err_POD_map(j,i);
 
                 Err_POD_time(i) = std::sqrt(Err_POD_time(i))/norm_sn_set(i);
             }
 
+            std::cout << "Computing Jaccard index ..." << std::endl << std::endl;
+            Err_POD_map = Err_POD_map/Vinf;
+
+            for ( int i = 0; i < settings.Ns; i++ )
+            {
+                int count = 0;
+                for ( int j = 0; j < ndim*Nr; j++ )
+                {
+                    if ( Err_POD_map(j,i) < 0.1 )
+                        count++;
+                }
+                J_POD_time(i) = (double)count/((double)ndim*(double)Nr);
+            }
 
             Nm_POD = Nrec;
 
@@ -145,7 +164,7 @@ int main( int argc, char *argv[] )
                                         settings.flag_filter,  
                                         settings.sigma);
 
-                std::cout << " Done! " << std::endl << std::endl;
+                std::cout << " Done! " << std::endl;
                 
                 Nrec = Nmod( settings.En, K_pc);
                 Eigen::MatrixXd Sig = Eigen::MatrixXd::Zero(Nrec, Nrec);
@@ -157,19 +176,34 @@ int main( int argc, char *argv[] )
                 for ( int i = 0; i < Nrec; i++ )
                     Sig(i,i) = std::sqrt(lambda(i));
     
-                std::cout << "Computing error in time ..." << std::endl;
+                std::cout << "Computing error in time ..." << std::endl << std::endl;
     
                 Eigen::MatrixXd Err_SPOD_map = sn_set - Phi.leftCols(Nrec)*Sig*eig_vec.transpose().topRows(Nrec);
     
                 for ( int i = 0; i < settings.Ns; i++ )
                 {
                     for ( int j = 0; j < ndim*Nr; j++ )
-                        if ( sn_set(j,i) < tol )    
-                            Err_SPOD_time(i,nfj) += Err_SPOD_map(j,i)*Err_SPOD_map(j,i);
-                        else
-                            Err_SPOD_time(i,nfj) += Err_SPOD_map(j,i)*Err_SPOD_map(j,i); // /(sn_set(j,i)*sn_set(j,i));  
+                        Err_SPOD_time(i,nfj) += Err_SPOD_map(j,i)*Err_SPOD_map(j,i);
+                        // if ( sn_set(j,i) < tol )    
+                        //     Err_SPOD_time(i,nfj) += Err_SPOD_map(j,i)*Err_SPOD_map(j,i);
+                        // else
+                        //     Err_SPOD_time(i,nfj) += Err_SPOD_map(j,i)*Err_SPOD_map(j,i); // /(sn_set(j,i)*sn_set(j,i));  
     
                     Err_SPOD_time(i,nfj) = std::sqrt(Err_SPOD_time(i,nfj))/norm_sn_set(i);
+                }
+
+                std::cout << "Computing Jaccard index ..." << std::endl << std::endl;
+                Err_SPOD_map = Err_SPOD_map/Vinf;
+
+                for ( int i = 0; i < settings.Ns; i++ )
+                {
+                    int count = 0;
+                    for ( int j = 0; j < ndim*Nr; j++ )
+                    {
+                        if ( Err_SPOD_map(j,i) < 0.1)
+                            count++;
+                    }
+                    J_SPOD_time(i,nfj) = (double)count/((double)ndim*(double)Nr);
                 }
 
                 Nm_SPOD.push_back(Nrec);
@@ -184,6 +218,7 @@ int main( int argc, char *argv[] )
     sn_set.col(i) += mean;
 
     Eigen::VectorXd Err_DMD_time = Eigen::VectorXd::Zero(settings.Ns);
+    Eigen::VectorXd J_DMD_time = Eigen::VectorXd::Zero(settings.Ns);
 //Defining scope for DMD ( Rank=SVHT, Coeffs = OPT )
     {
 
@@ -203,7 +238,7 @@ int main( int argc, char *argv[] )
                         eig_vec_POD,
                         0 );
 
-        std::cout << " Done! " << std::endl << std::endl;
+        std::cout << " Done! " << std::endl;
         
         int Nm = Phi.cols();
         std::cout << "Number of modes extracted : " << Nm << std::endl;
@@ -218,7 +253,8 @@ int main( int argc, char *argv[] )
                                                             lambda_DMD, 
                                                             Phi );
             
-        std::cout << " Done! " << std::endl << std::endl;
+        std::cout << " Done! " << std::endl;
+        std::cout << "Computing Error in time ... " << std::endl << std::endl;
 
         Eigen::MatrixXcd V_and(lambda_DMD.size(), settings.Ns);
         
@@ -238,23 +274,35 @@ int main( int argc, char *argv[] )
         for ( int i = 0; i < settings.Ns; i++ )
         {
             for ( int j = 0; j < ndim*Nr; j++ )
-                if ( sn_set(j,i) < tol )
-                    Err_DMD_time(i) += Err_DMD_map(j,i)*Err_DMD_map(j,i);
-                else    
-                    Err_DMD_time(i) += Err_DMD_map(j,i)*Err_DMD_map(j,i); // /(sn_set(j,i)*sn_set(j,i));  
+                Err_DMD_time(i) += Err_DMD_map(j,i)*Err_DMD_map(j,i);
 
             Err_DMD_time(i) = std::sqrt(Err_DMD_time(i))/norm_sn_set(i);
+        }
+
+        std::cout << "Computing Jaccard index ..." << std::endl << std::endl;
+        Err_DMD_map = Err_DMD_map/Vinf;
+
+        for ( int i = 0; i < settings.Ns; i++ )
+        {
+            int count = 0;
+            for ( int j = 0; j < ndim*Nr; j++ )
+            {
+                if ( Err_DMD_map(j,i) < 0.1 )
+                    count++;
+            }
+            J_DMD_time(i) = (double)count/((double)ndim*(double)Nr);
         }
         
         Nm_DMD = Nm;
     }
 
     Eigen::VectorXd Err_mrDMD_time = Eigen::VectorXd::Zero(settings.Ns);
+    Eigen::VectorXd J_mrDMD_time = Eigen::VectorXd::Zero(settings.Ns);    
 //Defining scope for mrDMD
     {
 
         std::cout << "Extracting basis mrDMD ..." << std::endl;
-        std::cout << "Computing nodes for Multi-Resolution Analysis " << std::endl <<std::endl;        
+        std::cout << "Computing nodes for Multi-Resolution Analysis\t ";        
 
         int level = 0, bin_num = 0, offset = 0, max_levels = settings.max_levels, max_cycles = settings.max_cycles;
         std::vector<node_mrDMD> nodes = {}; 
@@ -270,14 +318,14 @@ int main( int argc, char *argv[] )
                             max_cycles,
                             "OPT");
 
-        std::cout << " Done! " << std::endl << std::endl;
+        std::cout << " Done! " << std::endl;
         
         int sum = 0;
         for ( int n_nodes = 0; n_nodes < nodes.size(); n_nodes++ )
             sum += nodes[n_nodes].Modes.cols();
 
         std::cout << "Number of nodes stored : " << nodes.size() << std::endl;
-        std::cout << "Number of total modes stored : " << sum << std::endl << std::endl;
+        std::cout << "Number of total modes stored : " << sum << std::endl;
 
 
 //try to compute multi resolution reconstruction in a more clever and straightforward way that DOESN'T WORK!
@@ -321,7 +369,7 @@ int main( int argc, char *argv[] )
         // Eigen::MatrixXcd mrDMD_Rec;
         // for ( int i = 0; i < LRec.size(); i++ )
         //     mrDMD_Rec += LRec[i];
-
+        std::cout << "Computing Error in time ... " << std::endl << std::endl;
 
         Eigen::MatrixXcd mrDMD_Rec = Eigen::MatrixXcd::Zero(ndim*Nr, settings.Ns);
         
@@ -337,12 +385,23 @@ int main( int argc, char *argv[] )
         for ( int i = 0; i < settings.Ns; i++ )
         {
             for ( int j = 0; j < ndim*Nr; j++ )
-                if ( sn_set(j,i) < tol )
-                    Err_mrDMD_time(i) += Err_mrDMD_map(j,i)*Err_mrDMD_map(j,i);
-                else    
-                    Err_mrDMD_time(i) += Err_mrDMD_map(j,i)*Err_mrDMD_map(j,i); // /(sn_set(j,i)*sn_set(j,i));  
+                Err_mrDMD_time(i) += Err_mrDMD_map(j,i)*Err_mrDMD_map(j,i);
 
             Err_mrDMD_time(i) = std::sqrt(Err_mrDMD_time(i))/norm_sn_set(i);
+        }
+
+        std::cout << "Computing Jaccard index ..." << std::endl << std::endl;
+        Err_mrDMD_map = Err_mrDMD_map/Vinf;
+
+        for ( int i = 0; i < settings.Ns; i++ )
+        {
+            int count = 0;
+            for ( int j = 0; j < ndim*Nr; j++ )
+            {
+                if ( Err_mrDMD_map(j,i) < 0.1 )
+                    count++;
+            }
+            J_mrDMD_time(i) = (double)count/((double)ndim*(double)Nr);
         }
 
         Nm_mrDMD = sum;
@@ -350,6 +409,7 @@ int main( int argc, char *argv[] )
     }
 
     Eigen::VectorXd Err_RDMD_time = Eigen::VectorXd::Zero(settings.Ns);
+    Eigen::VectorXd J_RDMD_time = Eigen::VectorXd::Zero(settings.Ns);
 //Defining scope for RDMD
     {
 
@@ -357,7 +417,7 @@ int main( int argc, char *argv[] )
         Eigen::MatrixXd Coefs = Eigen::MatrixXd::Zero(3*settings.Ns, settings.Ns); 
         Eigen::MatrixXd Phi;
 
-        if ( argc == 1 )
+        if ( argc == 2 )
         {
             std::cout << "Extracting basis and Coeffs RDMD ... " << "\t";        
 
@@ -378,19 +438,31 @@ int main( int argc, char *argv[] )
 
         }
 
-        std::cout << " Done! " << std::endl << std::endl;
+        std::cout << " Done! " << std::endl;
+        std::cout << "Computing Error in time ... " << std::endl << std::endl;
 
         Eigen::MatrixXd Err_RDMD_map = sn_set - Phi*Coefs;
 
         for ( int i = 0; i < settings.Ns; i++ )
         {
             for ( int j = 0; j < ndim*Nr; j++ )
-                if ( sn_set(j,i) < tol )
-                    Err_RDMD_time(i) += Err_RDMD_map(j,i)*Err_RDMD_map(j,i);
-                else    
-                    Err_RDMD_time(i) += Err_RDMD_map(j,i)*Err_RDMD_map(j,i); // /(sn_set(j,i)*sn_set(j,i));  
+                Err_RDMD_time(i) += Err_RDMD_map(j,i)*Err_RDMD_map(j,i);
 
             Err_RDMD_time(i) = std::sqrt(Err_RDMD_time(i))/norm_sn_set(i);
+        }
+
+        std::cout << "Computing Jaccard index ..." << std::endl << std::endl;
+        Err_RDMD_map = Err_RDMD_map/Vinf;
+
+        for ( int i = 0; i < settings.Ns; i++ )
+        {
+            int count = 0;
+            for ( int j = 0; j < ndim*Nr; j++ )
+            {
+                if ( Err_RDMD_map(j,i) < 0.1 )
+                    count++;
+            }
+            J_RDMD_time(i) = (double)count/((double)ndim*(double)Nr);
         }
 
         Nm_RDMD = settings.r_RDMD;
@@ -431,210 +503,222 @@ int main( int argc, char *argv[] )
    
     error_methods.close();
 
-    std::cout << "Done" << std::endl;
+    std::cout << "Done" << std::endl << std::endl;
 
-    int n_err = Nf.size() + 4;
-    Eigen::MatrixXd Err_RBM( settings.Ns, n_err );
-    Err_RBM.col(0) = Err_POD_time;
-    Err_RBM.middleCols(1, Nf.size()) = Err_SPOD_time;
-    Err_RBM.col(Nf.size()+1) = Err_DMD_time;
-    Err_RBM.col(Nf.size()+2) = Err_mrDMD_time;
-    Err_RBM.col(Nf.size()+3) = Err_RDMD_time;
-    
-    Eigen::VectorXi N_modes_RBM(n_err);
+    std::cout << "Writing Jaccard index file " << "\t";
 
-    N_modes_RBM(0) = Nm_POD;
-    for ( int i = 0; i < Nf.size(); i ++)
-        N_modes_RBM(i+1) = Nm_SPOD[i];
-    
-    N_modes_RBM(Nf.size()+1) = Nm_DMD;
-    N_modes_RBM(Nf.size()+2) = Nm_mrDMD;
-    N_modes_RBM(Nf.size()+3) = Nm_RDMD;
+    std::ofstream Jaccard_methods;
+    Jaccard_methods.open("Jaccard_RBM.dat");
 
-    Eigen::VectorXd Err_interp(n_err);
-    int index1, index2;
+    Jaccard_methods << "Time(s)" << "\t";
+    Jaccard_methods << "J_POD" << "\t";
+    Jaccard_methods << "J_SPOD_" << Nf[0] << "\t";
+    Jaccard_methods << "J_SPOD_" << Nf[1] << "\t";
+    Jaccard_methods << "J_SPOD_" << Nf[2] << "\t";
+    Jaccard_methods << "J_SPOD_" << Nf[3] << "\t";
+    Jaccard_methods << "J_DMD" << "\t";
+    Jaccard_methods << "J_mrDMD" << "\t";
+    Jaccard_methods << "J_RDMD" << "\n";
 
-    std::vector<int> pos = {};
-    int best_method_idx;
-
-//Adaptive reconstruction on each selected time step
-    int Nf_SPOD = 0;
    
-    for ( int i = 0; i < settings.t_rec.size(); i++ )
+    for( int j = 0; j < settings.Ns; j++ ) 
     {
-        std::cout << " Adaptive reconstruction at time : " << settings.t_rec[i] << std::endl;
+        Jaccard_methods << std::setprecision(8) << t_vec(j) << "\t";
+        Jaccard_methods <<  std::setprecision(8) << J_POD_time(j) << "\t";
+        
+        for ( int k = 0; k < Nf.size(); k++ )
+            Jaccard_methods << std::setprecision(8) << J_SPOD_time(j,k) << "\t";
 
-        index1 = 0; 
-        index2 = 0;
-        for ( int nt = 0; nt < t_vec.size()-1; nt ++ )
+        Jaccard_methods << std::setprecision(8) << J_DMD_time(j) << "\t";
+        Jaccard_methods << std::setprecision(8) << J_mrDMD_time(j) << "\t";
+        Jaccard_methods << std::setprecision(8) << J_RDMD_time(j);
+
+        Jaccard_methods << std::endl;
+
+    }
+   
+    Jaccard_methods.close();
+
+    std::cout << "Done" << std::endl << std::endl;
+
+
+    if ( settings.flag_rec == "YES")
+    {
+
+        int n_err = Nf.size() + 4;
+        Eigen::MatrixXd Err_RBM( settings.Ns, n_err );
+        Err_RBM.col(0) = Err_POD_time;
+        Err_RBM.middleCols(1, Nf.size()) = Err_SPOD_time;
+        Err_RBM.col(Nf.size()+1) = Err_DMD_time;
+        Err_RBM.col(Nf.size()+2) = Err_mrDMD_time;
+        Err_RBM.col(Nf.size()+3) = Err_RDMD_time;
+        
+        Eigen::VectorXi N_modes_RBM(n_err);
+
+        N_modes_RBM(0) = Nm_POD;
+        for ( int i = 0; i < Nf.size(); i ++)
+            N_modes_RBM(i+1) = Nm_SPOD[i];
+        
+        N_modes_RBM(Nf.size()+1) = Nm_DMD;
+        N_modes_RBM(Nf.size()+2) = Nm_mrDMD;
+        N_modes_RBM(Nf.size()+3) = Nm_RDMD;
+
+        Eigen::VectorXd Err_interp(n_err);
+        int index1, index2;
+
+
+        int best_method_idx;
+
+    //Adaptive reconstruction on each selected time step
+        int Nf_SPOD = 0;
+    
+        for ( int i = 0; i < settings.t_rec.size(); i++ )
         {
-            if ( (settings.t_rec[i] > t_vec(nt)) && (settings.t_rec[i] <= t_vec(nt+1)) )
+            std::vector<int> pos = {};
+            std::cout << " Adaptive reconstruction at time : " << settings.t_rec[i] << std::endl;
+
+            index1 = 0;
+            index2 = 0;
+            for ( int nt = 0; nt < t_vec.size()-1; nt ++ )
             {
-                index1 = nt;
-                index2 = nt+1;
-                break;
+                if ( (settings.t_rec[i] > t_vec(nt)) && (settings.t_rec[i] <= t_vec(nt+1)) )
+                {
+                    index1 = nt;
+                    index2 = nt+1;
+                    break;
+                }
             }
-        }
 
-        if ( index1 == index2 )
-        {
-            std::cout << "Time for reconstruction out of interval!" << std::endl;
-            continue;
-        }
-
-        int count = 0;
-        for ( int k = 0; k < n_err; k ++ )
-        {
-            Err_interp(k) = Err_RBM(index1,k) + (Err_RBM(index2,k) - Err_RBM(index1,k))/
-                            (settings.Dt_cfd*settings.Ds)*(t_vec[index1] - settings.t_rec[i]);
-        
-            if ( Err_interp(k) < tol_rec )
+            if ( index1 == index2 )
             {
-                pos.push_back(k);
-                count ++;
+                std::cout << "Time for reconstruction out of interval!" << std::endl;
+                continue;
             }
 
-        }
-
-        if ( count == 0 )
-        {
-            double min_val = Err_interp.minCoeff( &best_method_idx );
-            std::cout << " No methods under the prescribed tolerance\n Smallest Error selected " << std::endl;
-        }
-
-        if ( count == 1 )
-        {
-            best_method_idx = pos[0];
-            std::cout << " One methods under the prescribed tolerance " << std::endl;
-        }
-
-        if ( count > 1 )
-        {
-            std::cout << count << " methods under the prescribed tolerance\n Selecting the one with less modes " << std::endl;
-            Eigen::VectorXi Nm_new(pos.size());
-            for ( int j = 0; j < pos.size(); j++ )
-                Nm_new(j) = N_modes_RBM(pos[j]);
+            int count = 0;
+            for ( int k = 0; k < n_err; k ++ )
+            {
+                Err_interp(k) = Err_RBM(index1,k) + (Err_RBM(index2,k) - Err_RBM(index1,k))/
+                                (settings.Dt_cfd*settings.Ds)*(t_vec[index1] - settings.t_rec[i]);
             
-            int temp;
-            int min_val = Nm_new.minCoeff( &temp );
-            best_method_idx = pos[temp];
-            
+                if ( Err_interp(k) < tol_rec )
+                {
+                    pos.push_back(k);
+                    count ++;
+                }
 
-        }
+            }
 
-        std::string method = method_selected ( best_method_idx, Nf_SPOD, Nf );
-        std::cout << " Error : " << Err_interp(best_method_idx) << " using method " << method 
-                    << " with Nf ( value meaningful only for SPOD ) : " << Nf_SPOD << std::endl;
-        
-        std::cout << "Computing Reconstruction using selected method " << std::endl;
-        
-        if ( method == "SPOD" )
-        {
-            Eigen::VectorXd lambda(settings.Ns);
-            Eigen::VectorXd K_pc(settings.Ns);
-            Eigen::MatrixXd eig_vec(settings.Ns, settings.Ns);
+    // std::cout << "Err_interp for current time step : " << Err_interp << std::endl;
+    // std::cout << " positions for best methods (under tolerance " <<  settings.tol << ")" << std::endl;
+    // for ( int kk = 0; kk < pos.size(); kk++)
+    //     std::cout << pos[kk] << "\t";
 
-            for ( int kt = 0; kt < settings.Ns; kt++ )
-                sn_set.col(kt) -= mean;        
+    //     std::cout << std::endl;
 
-            Eigen::MatrixXd Phi = SPOD_basis( sn_set,
-                                    lambda, K_pc, eig_vec,
-                                    Nf_SPOD,
-                                    settings.flag_bc, 
-                                    settings.flag_filter,  
-                                    settings.sigma);
+            if ( count == 0 )
+            {
+                double min_val = Err_interp.minCoeff( &best_method_idx );
+                std::cout << " No methods under the prescribed tolerance\n Smallest Error selected " << std::endl;
+            }
 
-            int Nrec = Nmod( settings.En, K_pc);
+            if ( count == 1 )
+            {
+                best_method_idx = pos[0];
+                std::cout << " One methods under the prescribed tolerance " << std::endl;
+            }
 
-            std::vector<double> t_v( settings.Ns );
-            t_v[0] = settings.nstart*settings.Dt_cfd;
-
-            for ( int kt = 1; kt < settings.Ns; kt++ )
-                t_v[kt] = t_v[kt-1] + settings.Dt_cfd*settings.Ds;
-
-            Eigen::MatrixXd Rec = Reconstruction_S_POD ( t_v,
-                                K_pc, lambda, eig_vec.transpose(),
-                                Phi, settings.t_rec[i],
-                                settings.En,
-                                settings.flag_prob,
-                                settings.flag_interp ) ;
-
-            for ( int kt = 0; kt < Rec.cols(); kt++)
-                Rec.col(kt) = Rec.col(kt) + mean.segment(kt*Nr, Nr);
-
-            std::cout << "Writing reconstructed field ..." << "\t";
-
-            write_Reconstructed_fields ( Rec, Coords,
-                                    settings.out_file,
-                                    settings.flag_prob, i );
-
-            std::cout << "Done" << std::endl << std::endl;
-            
-        }
-
-        if ( method == "DMD" )
-        {
-
-        Eigen::VectorXd lambda_POD;
-        Eigen::MatrixXd eig_vec_POD;
-        Eigen::VectorXcd lambda_DMD;
-        Eigen::MatrixXcd eig_vec_DMD;      
-        Eigen::MatrixXcd Phi;
-        Eigen::VectorXcd alfa;    
-
-        Phi = DMD_basis( sn_set,
-                        lambda_DMD,
-                        eig_vec_DMD,
-                        lambda_POD,
-                        eig_vec_POD,
-                        0 );
-
-        alfa = Calculate_Coefs_DMD_exact ( sn_set.leftCols(settings.Ns-1),  
-                                                            lambda_DMD,  
-                                                            Phi );                    
+            if ( count > 1 )
+            {
+                std::cout << count << " methods under the prescribed tolerance\n Selecting the one with less modes " << std::endl;
+                Eigen::VectorXi Nm_new(pos.size());
+                for ( int j = 0; j < pos.size(); j++ )
+                    Nm_new(j) = N_modes_RBM(pos[j]);
                 
-        Eigen::MatrixXcd Rec = Reconstruction_DMD ( settings.t_rec[i],
-                                                settings.Dt_cfd*settings.Ds,
-                                                alfa,
-                                                Phi,
-                                                lambda_DMD,
-                                                settings.flag_prob );
+                int temp;
+                int min_val = Nm_new.minCoeff( &temp );
+                best_method_idx = pos[temp];
+                
 
-        std::cout << "Writing reconstructed field ..." << "\t";
+            }
 
-        write_Reconstructed_fields ( Rec.real(), Coords,
-                                settings.out_file,
-                                settings.flag_prob, i );
+            std::string method = method_selected ( best_method_idx, Nf_SPOD, Nf );
+            std::cout << " Error : " << Err_interp(best_method_idx) << " using method " << method 
+                        << " with Nf ( value meaningful only for SPOD ) : " << Nf_SPOD << std::endl;
+            
+            std::cout << "Computing Reconstruction using selected method " << std::endl;
+            
+            if ( method == "SPOD" )
+            {
+                Eigen::VectorXd lambda(settings.Ns);
+                Eigen::VectorXd K_pc(settings.Ns);
+                Eigen::MatrixXd eig_vec(settings.Ns, settings.Ns);
 
-        std::cout << "Done" << std::endl << std::endl;
-        
-        }
+                for ( int kt = 0; kt < settings.Ns; kt++ )
+                    sn_set.col(kt) -= mean;        
 
+                Eigen::MatrixXd Phi = SPOD_basis( sn_set,
+                                        lambda, K_pc, eig_vec,
+                                        Nf_SPOD,
+                                        settings.flag_bc, 
+                                        settings.flag_filter,  
+                                        settings.sigma);
 
-        if ( method == "mrDMD" )
-        {
+                int Nrec = Nmod( settings.En, K_pc);
 
-            double dts = settings.Dt_cfd*settings.Ds;
+                std::vector<double> t_v( settings.Ns );
+                t_v[0] = settings.nstart*settings.Dt_cfd;
 
-            int level = 0, bin_num = 0, offset = 0, max_levels = settings.max_levels, max_cycles = settings.max_cycles;
-            std::vector<node_mrDMD> nodes = {}; 
+                for ( int kt = 1; kt < settings.Ns; kt++ )
+                    t_v[kt] = t_v[kt-1] + settings.Dt_cfd*settings.Ds;
 
-            nodes = mrDMD_basis( sn_set,      
-                                nodes,  
-                                -1,                    
-                                dts,                      
-                                t_0,                
-                                level,                          
-                                bin_num,
-                                offset,
-                                max_levels,
-                                max_cycles,
-                                "OPT");
+                Eigen::MatrixXd Rec = Reconstruction_S_POD ( t_v,
+                                    K_pc, lambda, eig_vec.transpose(),
+                                    Phi, settings.t_rec[i],
+                                    settings.En,
+                                    settings.flag_prob,
+                                    settings.flag_interp ) ;
 
-            Eigen::MatrixXcd Rec = Reconstruction_mrDMD ( settings.t_rec[i],                                                                                                                                                                                                                                                                                                                              
-                                                        dts,       
-                                                        nodes,     
-                                                        settings.flag_prob );  
+                for ( int kt = 0; kt < Rec.cols(); kt++)
+                    Rec.col(kt) = Rec.col(kt) + mean.segment(kt*Nr, Nr);
+
+                std::cout << "Writing reconstructed field ..." << "\t";
+
+                write_Reconstructed_fields ( Rec, Coords,
+                                        settings.out_file,
+                                        settings.flag_prob, i );
+
+                std::cout << "Done" << std::endl << std::endl;
+                
+            }
+
+            if ( method == "DMD" )
+            {
+
+            Eigen::VectorXd lambda_POD;
+            Eigen::MatrixXd eig_vec_POD;
+            Eigen::VectorXcd lambda_DMD;
+            Eigen::MatrixXcd eig_vec_DMD;      
+            Eigen::MatrixXcd Phi;
+            Eigen::VectorXcd alfa;    
+
+            Phi = DMD_basis( sn_set,
+                            lambda_DMD,
+                            eig_vec_DMD,
+                            lambda_POD,
+                            eig_vec_POD,
+                            0 );
+
+            alfa = Calculate_Coefs_DMD_exact ( sn_set.leftCols(settings.Ns-1),  
+                                                                lambda_DMD,  
+                                                                Phi );                    
+                    
+            Eigen::MatrixXcd Rec = Reconstruction_DMD ( settings.t_rec[i],
+                                                    settings.Dt_cfd*settings.Ds,
+                                                    alfa,
+                                                    Phi,
+                                                    lambda_DMD,
+                                                    settings.flag_prob );
 
             std::cout << "Writing reconstructed field ..." << "\t";
 
@@ -643,66 +727,104 @@ int main( int argc, char *argv[] )
                                     settings.flag_prob, i );
 
             std::cout << "Done" << std::endl << std::endl;
+            
+            }
 
-        }
 
-        if ( method == "RDMD" )
-        {
-
-            // for ( int i = 0; i < settings.Ns; i++ )
-                // sn_set.col(i) -= mean;        
-            Eigen::VectorXd lambda = Eigen::VectorXd::Zero(3*settings.Ns);
-            Eigen::MatrixXd Coefs = Eigen::MatrixXd::Zero(3*settings.Ns, settings.Ns);
-            Eigen::MatrixXd Phi;
-
-            if ( argc == 1 )
+            if ( method == "mrDMD" )
             {
-                std::cout << "Extracting basis and Coeffs RDMD ... " << "\t";        
-                //You can define rank DMD at each time step from the config file ( use -1 for the adaptive study adviced)
-                Phi = RDMD_modes_coefs ( sn_set,
+
+                double dts = settings.Dt_cfd*settings.Ds;
+
+                int level = 0, bin_num = 0, offset = 0, max_levels = settings.max_levels, max_cycles = settings.max_cycles;
+                std::vector<node_mrDMD> nodes = {}; 
+
+                nodes = mrDMD_basis( sn_set,      
+                                    nodes,  
+                                    -1,                    
+                                    dts,                      
+                                    t_0,                
+                                    level,                          
+                                    bin_num,
+                                    offset,
+                                    max_levels,
+                                    max_cycles,
+                                    "OPT");
+
+                Eigen::MatrixXcd Rec = Reconstruction_mrDMD ( settings.t_rec[i],                                                                                                                                                                                                                                                                                                                              
+                                                            dts,       
+                                                            nodes,     
+                                                            settings.flag_prob );  
+
+                std::cout << "Writing reconstructed field ..." << "\t";
+
+                write_Reconstructed_fields ( Rec.real(), Coords,
+                                        settings.out_file,
+                                        settings.flag_prob, i );
+
+                std::cout << "Done" << std::endl << std::endl;
+
+            }
+
+            if ( method == "RDMD" )
+            {
+
+                // for ( int i = 0; i < settings.Ns; i++ )
+                    // sn_set.col(i) -= mean;        
+                Eigen::VectorXd lambda = Eigen::VectorXd::Zero(3*settings.Ns);
+                Eigen::MatrixXd Coefs = Eigen::MatrixXd::Zero(3*settings.Ns, settings.Ns);
+                Eigen::MatrixXd Phi;
+
+                if ( argc == 2 )
+                {
+                    std::cout << "Extracting basis and Coeffs RDMD ... " << "\t";        
+                    //You can define rank DMD at each time step from the config file ( use -1 for the adaptive study adviced)
+                    Phi = RDMD_modes_coefs ( sn_set,
+                                            Coefs,
+                                            lambda,     
+                                            settings.r,
+                                            settings.r_RDMD,
+                                            settings.En );
+                }
+                else
+                {
+                    std::cout << "Reading basis and extracting Coeffs RDMD ... " << "\t"; 
+                    std::string file_modes = argv[2];
+                    Phi = read_modes( file_modes, ndim*Nr, settings.r_RDMD );
+                    Coefs = Phi.transpose()*sn_set;
+
+                }
+
+                std::vector<double> t_st_vec(settings.Ns);
+                t_st_vec[0] = t_0;
+
+                for ( int i = 1; i < settings.Ns; i++ )
+                    t_st_vec[i] = t_st_vec[i-1] + settings.Dt_cfd*settings.Ds;
+
+                Eigen::MatrixXd Rec = Reconstruction_RDMD ( settings.t_rec[i],
+                                        t_st_vec,
                                         Coefs,
-                                        lambda,     
-                                        settings.r,
-                                        settings.r_RDMD,
-                                        settings.En );
+                                        Phi,
+                                        settings.flag_prob,
+                                        settings.flag_interp );
+
+                            // for ( int i = 0; i < Rec.cols(); i++)
+                                // Rec.col(i) = Rec.col(i) + mean.segment(i*Nr, Nr);
+
+                std::cout << "Writing reconstructed field ..." << "\t";
+
+                write_Reconstructed_fields ( Rec, Coords,
+                                        settings.out_file,
+                                        settings.flag_prob, i );
+
+                std::cout << "Done" << std::endl << std::endl;            
+
             }
-            else
-            {
 
-                std::string file_modes = argv[2];
-                Phi = read_modes( file_modes, ndim*Nr, settings.r_RDMD );
-                Coefs = Phi.transpose()*sn_set;
-
-            }
-
-            std::vector<double> t_st_vec(settings.Ns);
-            t_st_vec[0] = t_0;
-
-            for ( int i = 1; i < settings.Ns; i++ )
-                t_st_vec[i] = t_st_vec[i-1] + settings.Dt_cfd*settings.Ds;
-
-            Eigen::MatrixXd Rec = Reconstruction_RDMD ( settings.t_rec[i],
-                                    t_st_vec,
-                                    Coefs,
-                                    Phi,
-                                    settings.flag_prob,
-                                    settings.flag_interp );
-
-                        // for ( int i = 0; i < Rec.cols(); i++)
-                            // Rec.col(i) = Rec.col(i) + mean.segment(i*Nr, Nr);
-
-            std::cout << "Writing reconstructed field ..." << "\t";
-
-            write_Reconstructed_fields ( Rec, Coords,
-                                    settings.out_file,
-                                    settings.flag_prob, i );
-
-            std::cout << "Done" << std::endl << std::endl;            
 
         }
-
-
     }
+
 
     return 0;
 

@@ -65,6 +65,17 @@ std::cout << "Matrix Rec= USV^T :\n " << U*Sigma*V.transpose() << std::endl; //T
 // 
 // std::cout << "N_red1 : " << N_red1-1 << std::endl;
 
+Eigen::VectorXd u(10);
+u << 2.0, 3.5, 9.0, 5.1, 0.5, 5.1, 3.6, 2.2, 5.1, 9.9;
+
+int pos;
+double min_val = u.minCoeff( &pos );
+
+std::cout << " Min val= " << min_val << " at index : " << pos << std::endl;
+
+std::cout << "Sciao sciao " << std::endl;
+
+
 return 0;
 
 }
