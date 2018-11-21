@@ -537,14 +537,14 @@ int main( int argc, char *argv[] )
     for( int j = 0; j < settings.Ns; j++ ) 
     {
         error_methods_max << std::setprecision(8) << t_vec(j) << "\t";
-        error_methods_max <<  std::setprecision(8) << Err_POD_time(j) << "\t";
+        error_methods_max <<  std::setprecision(8) << Err_PODmax_time(j) << "\t";
         
         for ( int k = 0; k < Nf.size(); k++ )
-            error_methods_max << std::setprecision(8) << Err_SPOD_time(j,k) << "\t";
+            error_methods_max << std::setprecision(8) << Err_SPODmax_time(j,k) << "\t";
 
-        error_methods_max << std::setprecision(8) << Err_DMD_time(j) << "\t";
-        error_methods_max << std::setprecision(8) << Err_mrDMD_time(j) << "\t";
-        error_methods_max << std::setprecision(8) << Err_RDMD_time(j);
+        error_methods_max << std::setprecision(8) << Err_DMDmax_time(j) << "\t";
+        error_methods_max << std::setprecision(8) << Err_mrDMDmax_time(j) << "\t";
+        error_methods_max << std::setprecision(8) << Err_RDMDmax_time(j);
 
         error_methods_max << std::endl;
 

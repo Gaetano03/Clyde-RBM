@@ -712,7 +712,8 @@ std::vector<node_mrDMD> mrDMD_basis( Eigen::MatrixXd &snap_set,
     //Output nodes information
     std::cout << "----> Node  Info : " << std::endl << std::endl;
     std::cout <<  "Time interval : [" << node.t_begin << 
-                    ", " << node.t_end << "]" << std::endl;    
+                    ", " << node.t_end << "]" << std::endl;
+    std::cout << "Singular values : \n " << lam_POD << std::endl;    
     std::cout << " Snapshot interval (snaps index) : " << 
                     node.start << "\t" << node.stop << std::endl;
     std::cout << " bin_size : " << node.bin_size << std::endl;
