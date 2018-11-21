@@ -70,6 +70,7 @@ int main( int argc, char *argv[] )
 
     
     Eigen::VectorXd Err_POD_time = Eigen::VectorXd::Zero(settings.Ns);
+    Eigen::VectorXd Err_PODmax_time = Eigen::VectorXd::Zero(settings.Ns);
     Eigen::VectorXd J_POD_time = Eigen::VectorXd::Zero(settings.Ns);
 
     std::vector<int> Nf(4);
@@ -78,8 +79,8 @@ int main( int argc, char *argv[] )
     Nf[2] = std::ceil(2.0*settings.Ns/3.0);
     Nf[3] = settings.Ns;
     Eigen::MatrixXd Err_SPOD_time = Eigen::MatrixXd::Zero(settings.Ns,Nf.size());
+    Eigen::MatrixXd Err_SPODmax_time = Eigen::MatrixXd::Zero(settings.Ns,Nf.size());
     Eigen::MatrixXd J_SPOD_time = Eigen::MatrixXd::Zero(settings.Ns,Nf.size());
-
 
 //Defining common scope for POD and SPOD
     {
@@ -124,7 +125,10 @@ int main( int argc, char *argv[] )
                     Err_POD_time(i) += Err_POD_map(j,i)*Err_POD_map(j,i);
 
                 Err_POD_time(i) = std::sqrt(Err_POD_time(i))/norm_sn_set(i);
+                Eigen::VectorXd temp = Err_POD_map.col(i).cwiseAbs();
+                Err_PODmax_time(i) = temp.maxCoeff()/Vinf;
             }
+
 
             std::cout << "Computing Jaccard index ..." << std::endl << std::endl;
             Err_POD_map = Err_POD_map/Vinf;
@@ -176,7 +180,7 @@ int main( int argc, char *argv[] )
                 for ( int i = 0; i < Nrec; i++ )
                     Sig(i,i) = std::sqrt(lambda(i));
     
-                std::cout << "Computing error in time ..." << std::endl << std::endl;
+                std::cout << "Computing error in time ..." << std::endl;
     
                 Eigen::MatrixXd Err_SPOD_map = sn_set - Phi.leftCols(Nrec)*Sig*eig_vec.transpose().topRows(Nrec);
     
@@ -190,6 +194,8 @@ int main( int argc, char *argv[] )
                         //     Err_SPOD_time(i,nfj) += Err_SPOD_map(j,i)*Err_SPOD_map(j,i); // /(sn_set(j,i)*sn_set(j,i));  
     
                     Err_SPOD_time(i,nfj) = std::sqrt(Err_SPOD_time(i,nfj))/norm_sn_set(i);
+                    Eigen::VectorXd temp = Err_SPOD_map.col(i).cwiseAbs();
+                    Err_SPODmax_time(i,nfj) = temp.maxCoeff()/Vinf;
                 }
 
                 std::cout << "Computing Jaccard index ..." << std::endl << std::endl;
@@ -218,6 +224,7 @@ int main( int argc, char *argv[] )
     sn_set.col(i) += mean;
 
     Eigen::VectorXd Err_DMD_time = Eigen::VectorXd::Zero(settings.Ns);
+    Eigen::VectorXd Err_DMDmax_time = Eigen::VectorXd::Zero(settings.Ns);
     Eigen::VectorXd J_DMD_time = Eigen::VectorXd::Zero(settings.Ns);
 //Defining scope for DMD ( Rank=SVHT, Coeffs = OPT )
     {
@@ -277,6 +284,8 @@ int main( int argc, char *argv[] )
                 Err_DMD_time(i) += Err_DMD_map(j,i)*Err_DMD_map(j,i);
 
             Err_DMD_time(i) = std::sqrt(Err_DMD_time(i))/norm_sn_set(i);
+            Eigen::VectorXd temp = Err_DMD_map.col(i).cwiseAbs();
+            Err_DMDmax_time(i) = temp.maxCoeff()/Vinf;
         }
 
         std::cout << "Computing Jaccard index ..." << std::endl << std::endl;
@@ -297,6 +306,7 @@ int main( int argc, char *argv[] )
     }
 
     Eigen::VectorXd Err_mrDMD_time = Eigen::VectorXd::Zero(settings.Ns);
+    Eigen::VectorXd Err_mrDMDmax_time = Eigen::VectorXd::Zero(settings.Ns);
     Eigen::VectorXd J_mrDMD_time = Eigen::VectorXd::Zero(settings.Ns);    
 //Defining scope for mrDMD
     {
@@ -388,6 +398,8 @@ int main( int argc, char *argv[] )
                 Err_mrDMD_time(i) += Err_mrDMD_map(j,i)*Err_mrDMD_map(j,i);
 
             Err_mrDMD_time(i) = std::sqrt(Err_mrDMD_time(i))/norm_sn_set(i);
+            Eigen::VectorXd temp = Err_mrDMD_map.col(i).cwiseAbs();
+            Err_mrDMDmax_time(i) = temp.maxCoeff()/Vinf;
         }
 
         std::cout << "Computing Jaccard index ..." << std::endl << std::endl;
@@ -409,6 +421,7 @@ int main( int argc, char *argv[] )
     }
 
     Eigen::VectorXd Err_RDMD_time = Eigen::VectorXd::Zero(settings.Ns);
+    Eigen::VectorXd Err_RDMDmax_time = Eigen::VectorXd::Zero(settings.Ns);
     Eigen::VectorXd J_RDMD_time = Eigen::VectorXd::Zero(settings.Ns);
 //Defining scope for RDMD
     {
@@ -449,6 +462,8 @@ int main( int argc, char *argv[] )
                 Err_RDMD_time(i) += Err_RDMD_map(j,i)*Err_RDMD_map(j,i);
 
             Err_RDMD_time(i) = std::sqrt(Err_RDMD_time(i))/norm_sn_set(i);
+            Eigen::VectorXd temp = Err_RDMD_map.col(i).cwiseAbs();
+            Err_RDMDmax_time(i) = temp.maxCoeff()/Vinf;
         }
 
         std::cout << "Computing Jaccard index ..." << std::endl << std::endl;
@@ -469,10 +484,10 @@ int main( int argc, char *argv[] )
 
     }
 
-    std::cout << "Writing Error file " << "\t";
+    std::cout << "Writing Error files " << "\t";
 
     std::ofstream error_methods;
-    error_methods.open("Error_RBM.dat");
+    error_methods.open("Error_2_RBM.dat");
 
     error_methods << "Time(s)" << "\t";
     error_methods << "Err_POD" << "\t";
@@ -502,6 +517,40 @@ int main( int argc, char *argv[] )
     }
    
     error_methods.close();
+
+    std::cout << "Done" << std::endl << std::endl;
+
+    std::ofstream error_methods_max;
+    error_methods_max.open("Error_max_RBM.dat");
+
+    error_methods_max << "Time(s)" << "\t";
+    error_methods_max << "Err_POD" << "\t";
+    error_methods_max << "Err_SPOD_" << Nf[0] << "\t";
+    error_methods_max << "Err_SPOD_" << Nf[1] << "\t";
+    error_methods_max << "Err_SPOD_" << Nf[2] << "\t";
+    error_methods_max << "Err_SPOD_" << Nf[3] << "\t";
+    error_methods_max << "Err_DMD" << "\t";
+    error_methods_max << "Err_mrDMD" << "\t";
+    error_methods_max << "Err_RDMD" << "\n";
+
+   
+    for( int j = 0; j < settings.Ns; j++ ) 
+    {
+        error_methods_max << std::setprecision(8) << t_vec(j) << "\t";
+        error_methods_max <<  std::setprecision(8) << Err_POD_time(j) << "\t";
+        
+        for ( int k = 0; k < Nf.size(); k++ )
+            error_methods_max << std::setprecision(8) << Err_SPOD_time(j,k) << "\t";
+
+        error_methods_max << std::setprecision(8) << Err_DMD_time(j) << "\t";
+        error_methods_max << std::setprecision(8) << Err_mrDMD_time(j) << "\t";
+        error_methods_max << std::setprecision(8) << Err_RDMD_time(j);
+
+        error_methods_max << std::endl;
+
+    }
+   
+    error_methods_max.close();
 
     std::cout << "Done" << std::endl << std::endl;
 
@@ -599,7 +648,7 @@ int main( int argc, char *argv[] )
             for ( int k = 0; k < n_err; k ++ )
             {
                 Err_interp(k) = Err_RBM(index1,k) + (Err_RBM(index2,k) - Err_RBM(index1,k))/
-                                (settings.Dt_cfd*settings.Ds)*(t_vec[index1] - settings.t_rec[i]);
+                                (settings.Dt_cfd*settings.Ds)*(settings.t_rec[i] - t_vec[index1]);
             
                 if ( Err_interp(k) < tol_rec )
                 {

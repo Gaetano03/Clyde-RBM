@@ -1037,17 +1037,6 @@ Eigen::MatrixXcd fbDMD_basis ( const Eigen::MatrixXd &snap_set,
     Eigen::MatrixXd Atilde = Atilde_sq.sqrt();
     // std::cout << "Atilde :\n " << Atilde << std::endl;
 
-    // for ( int i = 0; i < fAtilde.rows(); i++ )
-    // {
-    //     for( int j = 0; j < fAtilde.cols(); j++ )
-    //     {   
-    //         if ( Atilde_sq(i,j) < 0.0 )
-    //             std::cout << "Hey Atilde has a negative element... Be careful! " << std::endl;
-
-    //         Atilde(i,j) = std::sqrt(Atilde_sq(i,j));
-    //     }
-    // }
-
     Eigen::EigenSolver<Eigen::MatrixXd> es(Atilde); 
     lam = es.eigenvalues();
     eig_vec = es.eigenvectors();
@@ -1136,7 +1125,8 @@ Eigen::MatrixXcd HODMD_basis( const Eigen::MatrixXd &snap_set,
     for ( int i = 0; i < N_svd2; i++ )
         Sigma2(i,i) = s2(i);
 
-    Eigen::MatrixXd R_hat = sn_set_hat_ho.rightCols(sn_set_hat_ho.cols()-1)*T_hat_ho.leftCols(N_svd2)*Sigma2.inverse()*U_hat_ho.leftCols(N_svd2).transpose();
+    Eigen::MatrixXd R_hat = sn_set_hat_ho.rightCols(sn_set_hat_ho.cols()-1)*
+                            T_hat_ho.leftCols(N_svd2)*Sigma2.inverse()*U_hat_ho.leftCols(N_svd2).transpose();
     Eigen::EigenSolver<Eigen::MatrixXd> es(R_hat); 
     lambda = es.eigenvalues(); 
     Eigen::MatrixXcd Full_eig_vec = es.eigenvectors();

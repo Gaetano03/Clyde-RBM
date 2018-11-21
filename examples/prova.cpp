@@ -21,18 +21,23 @@ std::cout << "ans*(double)j : " << aa*(double)j << std::endl;
 std::cout << "floor without double : " << std::floor(50/16) << std::endl;
 std::cout << "floor with double : " << std::floor((double)50/(double)16) << std::endl;
 
-Eigen::MatrixXd m(4,3);
-m << 1.0, 5.0, 3.2,
-    9.1, 2.0, 5.5,
-    3.5, 7.1, 4.6,
-    2.0, 8.0, 6.3;
+Eigen::MatrixXd m(3,3);
+m << -1.0, 5.0, 3.2,
+    9.1, -2.0, 5.5,
+    -3.5, -7.1, 4.6;
+    // 2.0, 8.0, 6.3;
 
+Eigen::VectorXd v(3);
+v << -1.0, 2.5, -9.3;
 
 Eigen::MatrixXd cc = Eigen::MatrixXd::Zero(5,5);
 
 cc = m;
 
-std::cout << "Matrix cc:\n" << cc << std::endl; 
+std::cout << "Matrix m:\n" << cc << std::endl; 
+
+
+std::cout << "abs of vector v" << v.cwiseAbs() << std::endl;
 
 Eigen::BDCSVD<Eigen::MatrixXd> svd( m, Eigen::ComputeThinU | Eigen::ComputeThinV );
 Eigen::VectorXd s = svd.singularValues();
