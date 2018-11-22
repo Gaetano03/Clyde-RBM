@@ -574,10 +574,10 @@ std::vector<node_mrDMD> mrDMD_basis( Eigen::MatrixXd &snap_set,
                     "\n Returning to above level" << std::endl << std::endl;
         return nodes;
     }
-    int step = std::floor( bin_size/nyq );
+    int step = std::floor( (double)bin_size/(double)(nyq - 1) );
     Eigen::MatrixXd _snap_set(N, nyq);
 
-    for ( int i = 0, jj = 0; i < nyq; i += step, jj++ )
+    for ( int i = 0, jj = 0; i < bin_size; i += step, jj++ )
         _snap_set.col(jj) = snap_set.col(i);
 
     Eigen::VectorXd lam_POD;
@@ -688,7 +688,8 @@ std::vector<node_mrDMD> mrDMD_basis( Eigen::MatrixXd &snap_set,
     }
 
     //Subtracting influence of slow modes
-    snap_set = snap_set - D_dmd.real();
+    Eigen::MatrixXd Sub = D_dmd.real();
+    snap_set = snap_set - Sub;
 
     //Storing all the necessary information in the node
     node_mrDMD node;
