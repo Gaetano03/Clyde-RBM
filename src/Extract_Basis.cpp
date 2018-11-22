@@ -427,11 +427,11 @@ Eigen::MatrixXcd DMD_basis ( const Eigen::MatrixXd &snap_set,
     // Divido per lambda
 
                                     
-                                    for (int i = 0; i < Nm; i++)
-                                        phi.col(i) = 1.0/lam(i)*appo*eig_vec.col(i);
+    for (int i = 0; i < Nm; i++)
+        phi.col(i) = 1.0/lam(i)*appo*eig_vec.col(i);
     // 
 
-                                    return phi;
+    return phi;
 
     //Standard DMD
     // return U*eig_vec;
@@ -563,7 +563,7 @@ std::vector<node_mrDMD> mrDMD_basis( Eigen::MatrixXd &snap_set,
 {
     std::cout << "--------LEVEL " << level << "---------------" << std::endl << std::endl;                                        
     const double PI = 3.1415926535;
-    int nyq = 4*max_cycles;                         //number of snaps needed to capture cycles
+    int nyq = 1*max_cycles;                         //number of snaps needed to capture cycles
 
     int N = snap_set.rows();                        //dimension of each snapshot
     int bin_size = snap_set.cols();                 //number of total snapshots available for the particular time bin
