@@ -23,6 +23,12 @@ int Nmod ( double En, Eigen::VectorXd K_pc );
 void eig_sort( Eigen::VectorXd &lam, Eigen::MatrixXd &eig_vec );
 
 
+void dmd_sort( Eigen::VectorXd &En, 
+                Eigen::MatrixXcd &Phi, 
+                Eigen::VectorXcd &lam, 
+                Eigen::VectorXcd &alfa );
+
+
 int SVHT ( Eigen::VectorXd lam, int m, int n );
 
 

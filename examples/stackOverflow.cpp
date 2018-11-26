@@ -193,7 +193,7 @@ if( method == "HODMD")
 if( method == "mrDMD")
 {
     int max_levels = 10;
-    int max_cycles = 2;
+    int max_cycles = 8;
     std::vector<node_mrDMD> nodes = {};
     nodes = mrDMD_basis( sn_set,       
                         nodes,        

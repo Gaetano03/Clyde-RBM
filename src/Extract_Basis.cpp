@@ -50,6 +50,51 @@ void eig_sort( Eigen::VectorXd &lam, Eigen::MatrixXd &eig_vec ) {
     }
 }
 
+
+void dmd_sort( Eigen::VectorXd &En, Eigen::MatrixXcd &Phi, Eigen::VectorXcd &lam, Eigen::VectorXcd &alfa ) {
+
+    unsigned int swap_count = 1;
+    double temp;
+    std::complex<double> temp1, temp2;
+
+    Eigen::VectorXcd temp_vec(Phi.rows()); 
+
+    while (swap_count > 0)
+    {
+
+        swap_count = 0;
+
+        for(unsigned int index = 1; index < En.size(); index++)
+        {
+
+            if ( En(index) > En(index-1) )
+            {
+
+                temp = En(index-1);
+                En(index-1) = En(index);
+                En(index) = temp;
+
+                temp1 = alfa(index-1);
+                alfa(index-1) = alfa(index);
+                alfa(index) = temp1;
+
+                temp2 = lam(index-1);
+                lam(index-1) = lam(index);
+                lam(index) = temp2;
+
+                temp_vec = Phi.col(index-1);
+                Phi.col(index-1) = Phi.col(index);
+                Phi.col(index) = temp_vec;
+
+                swap_count++;
+
+            }
+        }
+    }
+}
+
+
+
 // Should work only with singular values ( Not eigenvalues problems )
 int SVHT ( Eigen::VectorXd lam, int m, int n )
 {
@@ -428,7 +473,10 @@ Eigen::MatrixXcd DMD_basis ( const Eigen::MatrixXd &snap_set,
 
                                     
     for (int i = 0; i < Nm; i++)
+    {
         phi.col(i) = 1.0/lam(i)*appo*eig_vec.col(i);
+        phi.col(i) = phi.col(i)/phi.col(i).norm();
+    }
     // 
 
     return phi;

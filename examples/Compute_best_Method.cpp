@@ -398,6 +398,7 @@ int main( int argc, char *argv[] )
                 Err_mrDMD_time(i) += Err_mrDMD_map(j,i)*Err_mrDMD_map(j,i);
 
             Err_mrDMD_time(i) = std::sqrt(Err_mrDMD_time(i))/norm_sn_set(i);
+            std::cout << "Error mrDMD at time : " << t_vec(i) << " = " << Err_mrDMD_time(i) << std::endl;
             Eigen::VectorXd temp = Err_mrDMD_map.col(i).cwiseAbs();
             Err_mrDMDmax_time(i) = temp.maxCoeff()/Vinf;
         }

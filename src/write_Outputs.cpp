@@ -34,7 +34,7 @@ void Config_stream ( prob_settings settings )
     if ( settings.flag_method == "mrDMD" )
     {
         std::cout << " Max levels of the multi resolution : " << settings.max_levels << std::endl;
-        std::cout << " Number of samples per time bin : " << settings.max_cycles*4 << std::endl;
+        std::cout << " Number of samples per time bin : " << settings.max_cycles << std::endl;
     }
 
     if ( settings.flag_method == "HODMD" )
