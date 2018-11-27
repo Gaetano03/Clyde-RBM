@@ -43,4 +43,8 @@ void write_Reconstructed_fields ( const Eigen::MatrixXd Rec,
 
 void write_modes ( const Eigen::MatrixXd &Phi_cut );
 
+
+void write_err_j ( const Eigen::MatrixXd data, std::string filename);
+
+
 #endif // WRITE_OUTPUTS_HPP

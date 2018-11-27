@@ -759,3 +759,28 @@ void write_modes ( const Eigen::MatrixXd &Phi_cut )
 
 
 }
+
+
+
+
+void write_err_j ( const Eigen::MatrixXd data, std::string filename)
+{
+
+    std::ofstream datafile;
+    datafile.open(filename);
+    if ( data.rows() != data.cols() )
+    {
+        std::cout << "the matrix of data is not well shaped " << std::endl;
+    }
+
+    for( int j = 0; j < data.rows(); j++ ) 
+    {
+        for ( int nm = 0; nm < data.cols(); nm ++ )
+            datafile <<  std::setprecision(8) << data(j,nm) << "\t";
+
+        datafile << std::endl;
+
+    }
+
+    datafile.close();
+}

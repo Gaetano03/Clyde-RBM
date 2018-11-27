@@ -514,6 +514,8 @@ int main(int argc, char *argv[]) {
         std::cout << "Initialized vector of times " << std::endl;
 
         Eigen::VectorXd lambda = Eigen::VectorXd::Zero(3*settings.Ns);
+        Eigen::MatrixXd Coefs = Eigen::MatrixXd::Zero(3*settings.Ns, settings.Ns);
+        Eigen::MatrixXd Phi;
 
         if ( settings.flag_mean == "YES" )
         {
@@ -522,15 +524,28 @@ int main(int argc, char *argv[]) {
                 sn_set.col(i) -= mean;
         }
 
-        std::cout << "Extracting basis and Coeffs ... " << "\t";        
+        if ( argc == 2 )
+        {
+            std::cout << "Extracting basis and Coeffs RDMD ... " << "\t";        
 
-        Eigen::MatrixXd Coefs = Eigen::MatrixXd::Zero(3*settings.Ns, settings.Ns);
-        Eigen::MatrixXd Phi = RDMD_modes_coefs ( sn_set,
-                                                Coefs,
-                                                lambda,     
-                                                settings.r,
-                                                settings.r_RDMD,
-                                                settings.En );
+        
+            Phi = RDMD_modes_coefs ( sn_set,
+                                    Coefs,
+                                    lambda,     
+                                    settings.r,
+                                    settings.r_RDMD,
+                                    settings.En );
+
+        }
+        else
+        {
+
+            std::cout << "Reading basis and extracting Coeffs RDMD ... " << "\t";
+            std::string file_modes = argv[2];
+            Phi = read_modes( file_modes, settings.ndim*Nr, settings.r_RDMD );
+            Coefs = Phi.transpose()*sn_set;
+
+        }
 
         // std::cout << "Check mode orthogonality\n PhiT*Phi :\n " << Phi.transpose()*Phi << std::endl; 
 
@@ -541,7 +556,7 @@ int main(int argc, char *argv[]) {
         if ( settings.flag_wdb_be == "YES" )
         {
             std::cout << "Writing modes ..." << "\t"; //Writing one mode for all variables (ex (u,v)---> Phi1 = (Phiu1;Phiv1))
-            write_modes ( Phi );
+            write_modes ( Phi.leftCols(settings.r_RDMD) );
             std::cout << "Complete!" << std::endl;
 
             // std::cout << "Writing Coefficients ..." << "\t";

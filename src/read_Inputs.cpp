@@ -522,7 +522,8 @@ Eigen::MatrixXd read_col( std::string filename, int Nr, std::vector<int> Cols )
 
 Eigen::MatrixXd read_modes( std::string filename, int Nr, int r_RDMD )
 {
-    Eigen::MatrixXd field (Nr, r_RDMD);
+    Eigen::MatrixXd f(Nr, r_RDMD);
+
     std::ifstream Modes_data;
     Modes_data.open( filename );
 
@@ -551,20 +552,61 @@ Eigen::MatrixXd read_modes( std::string filename, int Nr, int r_RDMD )
         while( getline( iss, token, ' ') )
         {
             rubbish = std::stod(token);
-
             if ( count < r_RDMD )
                 point(count) = rubbish;
             
             count ++;
         } 
 
-        field.row(n_row) = point; 
+        f.row(n_row) = point; 
         n_row++;
 
     }
 
     Modes_data.close();
 
-    return field;
+    return f;
+
+}
+
+
+Eigen::MatrixXd read_err_j ( std::string filename, int Ns )
+{
+        std::ifstream file_data;
+        file_data.open( filename );
+
+            if ( !file_data.is_open() )
+        {
+            std::cout << "File : " << filename << " not found" << std::endl;    
+            exit (EXIT_FAILURE);
+        }
+
+        std::string line_flow_data ;
+
+        int n_row = 0, count = 0;
+        Eigen::MatrixXd Err_map = Eigen::MatrixXd::Zero(Ns, Ns); 
+
+        while ( getline( file_data, line_flow_data ) )
+        {
+
+            
+            std::istringstream iss(line_flow_data);
+            std::string token;
+            double err;
+            count = 0; 
+
+            while( getline( iss, token, '\t') )
+            {
+                err = std::stod(token);
+                Err_map(n_row, count) = err;
+
+                count ++;
+            } 
+ 
+            n_row++;
+
+        }
+
+        return Err_map;
 
 }

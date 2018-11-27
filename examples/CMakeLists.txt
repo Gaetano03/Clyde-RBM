@@ -18,3 +18,6 @@ target_link_libraries (Compute_best_Method clyde-rbm ${MANDATORY_LIBRARIES})
 
 add_executable (Compute_response_surface Compute_response_surface.cpp)
 target_link_libraries (Compute_response_surface clyde-rbm ${MANDATORY_LIBRARIES})
+
+add_executable (Compute_Adaptive_reconstruction Compute_Adaptive_reconstruction.cpp)
+target_link_libraries (Compute_Adaptive_reconstruction clyde-rbm ${MANDATORY_LIBRARIES})

@@ -1,6 +1,7 @@
 #include <iostream>
 #include <stdio.h> 
 #include <cmath>
+#include <vector>
 #include "LinearAlgebra/Eigen/Dense"
 #include "LinearAlgebra/Eigen/Eigenvalues"
 
@@ -51,6 +52,14 @@ for ( int i = 0; i < s.size(); i++ )
 
 std::cout << "Matrix Rec= USV :\n " << U*Sigma*V << std::endl; 
 std::cout << "Matrix Rec= USV^T :\n " << U*Sigma*V.transpose() << std::endl; //This is the one that works
+
+
+std::vector<Eigen::MatrixXd> pul(4, Eigen::MatrixXd::Zero(5,5));
+
+
+pul[0](1,2) = 9.8;
+
+std::cout << " Element : " << pul[0](1,2) << std::endl;
 
 // Eigen::VectorXd s = Eigen::VectorXd::LinSpaced(10,0.0001,0.0000000001);
 // 

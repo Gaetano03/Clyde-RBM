@@ -185,11 +185,6 @@ if( method == "HODMD")
 }
 
 
-
-
-
-
-
 if( method == "mrDMD")
 {
     int max_levels = 10;
@@ -227,6 +222,24 @@ if( method == "mrDMD")
 
     }
 
+
+    if ( fac_rec == 1 )
+    {
+        Eigen::MatrixXd Error_mrDMD_map = sn_set - Rec.real();
+        Eigen::VectorXd Error_mrDMD = Eigen::VectorXd::Zero(sn_set.cols());
+
+        for ( int i = 0; i < sn_set.cols(); i++ )
+        {
+            for ( int j = 0; j < sn_set.rows(); j++ )
+            {
+                Error_mrDMD(i) += Error_mrDMD_map(i,j)*Error_mrDMD_map(i,j);
+            }
+            Error_mrDMD(i) = std::sqrt(Error_mrDMD(i))/sn_set.col(i).norm();
+            std::cout << "Error at time step " << t(i) << " : " << Error_mrDMD(i) << std::endl;
+        }
+    
+    }
+
 std::cout << " Computed Reconstruction" << std::endl;
 
 }
@@ -240,6 +253,12 @@ if( method == "DMD" )
                                     lam_POD,
                                     eig_vec_POD, 
                                     r);
+
+    for ( int i = 0; i < Phi.cols(); i ++ )
+    {
+        Phi.col(i) = Phi.col(i)/Phi.col(i).norm();
+    } 
+
 
     // std::cout << "Singular values:\n " << lam_POD << std::endl;
     // std::cout << "Eigen-values DMD : " << std::endl;
@@ -257,20 +276,41 @@ if( method == "DMD" )
     // std::cout << "Coefficients : " << alfa << std::endl;
 
     //Calculate optimized coefficients
-    Eigen::VectorXcd alfa = Calculate_Coefs_DMD ( eig_vec,
-                                                eig_vec_POD,
-                                                lam,
-                                                lam_POD,
-                                                Nsnap - 1 );
+    Eigen::VectorXcd alfa = Calculate_Coefs_DMD_exact (sn_set.leftCols(Nsnap-1), lam, Phi);
 
-std::cout << "Done line 230" << std::endl;
     Eigen::VectorXcd omega(lam.size());
     for ( int i = 0; i < lam.size(); i++ )
         omega(i) = std::log(lam(i))/dt;
+
+    //Computing energy for each mode
+    Eigen::VectorXd En = Eigen::VectorXd::Zero(Phi.cols());
+    double T = t(t.size()-1);
+
+    for ( int i = 0 ; i < Phi.cols(); i ++ )
+    {
+
+        double alfa_i = alfa(i).imag();
+        double alfa_r = alfa(i).real();
+        double sigma = omega(i).real();
+
+        En(i) = (alfa_r*alfa_r + alfa_i*alfa_i)*(std::exp(2.0*sigma*T) - 1.0)/(2.0*sigma);
+
+        std::cout << "En at mode " << i << " " <<  En(i) << std::endl;
+
+    }
+
+    dmd_sort( En, Phi, lam, alfa);
+
+    std::cout << "En reordered :\n " << En << std::endl;
+    std::cout << "Lam reordered : \n" << lam << std::endl;
+
+
+// std::cout << "Done line 230" << std::endl;
+
     // std::cout << "DMD eigenvalues :\n" << lam << std::endl;
     // std::cout << "DMD omega :\n" << omega << std::endl;
-    
-    
+
+
     //Calculate Hybridized coefficients
     std::cout << "Calculating cofficients ... " << std::endl;
     Eigen::MatrixXcd Alfas = Calculate_Coefs_Matrix_DMD ( sn_set,

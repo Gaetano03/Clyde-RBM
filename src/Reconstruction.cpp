@@ -76,7 +76,7 @@ Eigen::MatrixXd Reconstruction_S_POD ( const std::vector<double> &t_vec,
     Eigen::MatrixXd Sig = Eigen::MatrixXd::Zero(Nrec, Nrec);
 
     for ( int i = 0; i < Nrec; i++ )
-        Sig(i, i) = sqrt(lam(i));
+        Sig(i, i) = std::sqrt(lam(i));
 
 
     if ( flag_prob == "SCALAR" ) 

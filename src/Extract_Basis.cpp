@@ -330,7 +330,7 @@ Eigen::MatrixXd SPOD_basis( const Eigen::MatrixXd &snap_set,
     phi_c = snap_set*eig_vec;
 
     count = 0;
-    while ( count < lam.size() && std::abs(lam(count)) > tol)
+    while ( count < lam.size() && lam(count) > tol)
             count++;
 
     Eigen::MatrixXd phi(Nr,count);
