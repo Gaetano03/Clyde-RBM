@@ -313,7 +313,7 @@ int main( int argc, char *argv[] )
         std::string filename1 = "Error_SPOD_Nf_" + std::to_string(i) + ".dat";
         write_err_j( Err_RBM_Nm_time[i], filename1 );
         std::string filename2 = "Jaccard_SPOD_Nf_" + std::to_string(i) + ".dat";
-        write_err_j( Err_RBM_Nm_time[i], filename2 );
+        write_err_j( J_RBM_Nm_time[i], filename2 );
 
     }
 
