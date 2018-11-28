@@ -14,8 +14,37 @@ int main( int argc, char *argv[] )
     
     //Reading configuration file
     Read_cfg( filecfg, settings );
+    double t_0 = settings.nstart*settings.Dt_cfd;
 
     int s_Nf = 5;
+    std::vector<int> Nf(s_Nf);
+    Nf[0] = 0;
+    Nf[1] = std::ceil(settings.Ns/10.0);
+    Nf[2] = std::ceil(settings.Ns/2.0);
+    Nf[3] = std::ceil(2.0*settings.Ns/3.0);
+    Nf[4] = settings.Ns;
+    int Nf_SPOD = 0;
+
+    int Nr = N_gridpoints ( settings.in_file );
+    std::cout << "Number of grid points : " << Nr << std::endl;
+
+    std::cout << "Reading Coordinates ... \t ";
+    Eigen::MatrixXd Coords = read_col( settings.in_file, Nr, settings.Cols_coords );
+    std::cout << "Done " << std::endl;
+
+    std::cout << "Storing snapshot Matrix ... \n ";
+    Eigen::MatrixXd sn_set = generate_snap_matrix( Nr, settings.Ns, settings.Ds, settings.nstart,
+                                        settings.Cols,
+                                        settings.in_file,
+                                        settings.flag_prob);
+
+    Eigen::VectorXd mean = sn_set.rowwise().mean();
+    Eigen::VectorXd norm_sn_set = Eigen::VectorXd::Zero(settings.Ns);
+
+    for ( int nt = 0; nt < settings.Ns; nt++ )
+        sn_set.col(nt) -= mean;
+
+    std::cout << "Initializing error surface ... " << std::endl;
     std::vector<Eigen::MatrixXd> Err_RBM_Nm_time;
     std::vector<Eigen::MatrixXd> J_RBM_Nm_time;
     std::vector<Eigen::MatrixXd> EJ_RBM_Nm_time;
@@ -108,10 +137,155 @@ int main( int argc, char *argv[] )
             ncount++;
         }
 
-        std::cout << "Best method is " << best_method_idx << " with number of modes " << ncount << std::endl;
+        std::string method = method_selected ( best_method_idx, Nf_SPOD, Nf );
+        std::cout << "Best method is " << method << " with number of modes " << ncount - 1
+            << " and Nf ( value meaningful only for SPOD ) : " << Nf_SPOD << std::endl;
         
+        std::cout << " Error : " << Err_interp(best_method_idx, ncount-1) << std::endl;
+                        
+            
+        std::cout << "Computing Reconstruction using selected method " << std::endl;
+        
+        if ( method == "SPOD" )
+        {
+            Eigen::VectorXd lambda(settings.Ns);
+            Eigen::VectorXd K_pc(settings.Ns);
+            Eigen::MatrixXd eig_vec(settings.Ns, settings.Ns);        
+
+            Eigen::MatrixXd Phi = SPOD_basis( sn_set,
+                                    lambda, K_pc, eig_vec,
+                                    Nf_SPOD,
+                                    settings.flag_bc, 
+                                    settings.flag_filter,  
+                                    settings.sigma);
+
+            int Nrec = ncount - 1;
+
+            std::vector<double> t_v( settings.Ns );
+            t_v[0] = settings.nstart*settings.Dt_cfd;
+
+            for ( int kt = 1; kt < settings.Ns; kt++ )
+                t_v[kt] = t_v[kt-1] + settings.Dt_cfd*settings.Ds;
+
+            Eigen::MatrixXd Rec = Reconstruction_S_POD ( t_v,
+                                K_pc, lambda, eig_vec.transpose(),
+                                Phi, settings.t_rec[i],
+                                settings.En,
+                                settings.flag_prob,
+                                settings.flag_interp ) ;
+
+            for ( int kt = 0; kt < Rec.cols(); kt++)
+                Rec.col(kt) = Rec.col(kt) + mean.segment(kt*Nr, Nr);
+
+            std::cout << "Writing reconstructed field ..." << "\t";
+
+            write_Reconstructed_fields ( Rec, Coords,
+                                    settings.out_file,
+                                    settings.flag_prob, i );
+
+            std::cout << "Done" << std::endl << std::endl;
+            
+        }
+
+
+        if ( method == "DMD" )
+        {
+
+            Eigen::VectorXd lambda_POD;
+            Eigen::MatrixXd eig_vec_POD;
+            Eigen::VectorXcd lambda_DMD;
+            Eigen::MatrixXcd eig_vec_DMD;      
+            Eigen::MatrixXcd Phi;
+            Eigen::VectorXcd alfa;    
+
+            Phi = DMD_basis( sn_set,
+                            lambda_DMD,
+                            eig_vec_DMD,
+                            lambda_POD,
+                            eig_vec_POD,
+                            settings.r );
+
+            alfa = Calculate_Coefs_DMD_exact ( sn_set.leftCols(settings.Ns-1),  
+                                                                lambda_DMD,  
+                                                                Phi );                    
+                    
+            Eigen::MatrixXcd Rec = Reconstruction_DMD ( settings.t_rec[i],
+                                                    settings.Dt_cfd*settings.Ds,
+                                                    alfa,
+                                                    Phi,
+                                                    lambda_DMD,
+                                                    settings.flag_prob );
+
+            for ( int kt = 0; kt < Rec.cols(); kt++)
+                Rec.col(kt) = Rec.col(kt) + mean.segment(kt*Nr, Nr);
+
+            std::cout << "Writing reconstructed field ..." << "\t";
+
+            write_Reconstructed_fields ( Rec.real(), Coords,
+                                    settings.out_file,
+                                    settings.flag_prob, i );
+
+            std::cout << "Done" << std::endl << std::endl;
+        
+        }
+
+
+        if ( method == "RDMD" )
+        {
+        
+            Eigen::VectorXd lambda = Eigen::VectorXd::Zero(3*settings.Ns);
+            Eigen::MatrixXd Coefs = Eigen::MatrixXd::Zero(3*settings.Ns, settings.Ns);
+            Eigen::MatrixXd Phi;
+
+            if ( argc == 2 )
+            {
+                std::cout << "Extracting basis and Coeffs RDMD ... " << "\t";        
+                //You can define rank DMD at each time step from the config file ( use -1 for the adaptive study adviced)
+                Phi = RDMD_modes_coefs ( sn_set,
+                                        Coefs,
+                                        lambda,     
+                                        settings.r,
+                                        settings.r_RDMD,
+                                        settings.En );
+            }
+            else
+            {
+                std::cout << "Reading basis and extracting Coeffs RDMD ... " << "\t"; 
+                std::string file_modes = argv[2];
+                Phi = read_modes( file_modes, settings.ndim*Nr, settings.r_RDMD );
+                Coefs = Phi.transpose()*sn_set;
+
+            }
+
+            std::vector<double> t_st_vec(settings.Ns);
+            t_st_vec[0] = t_0;
+
+            for ( int i = 1; i < settings.Ns; i++ )
+                t_st_vec[i] = t_st_vec[i-1] + settings.Dt_cfd*settings.Ds;
+
+            Eigen::MatrixXd Rec = Reconstruction_RDMD ( settings.t_rec[i],
+                                    t_st_vec,
+                                    Coefs,
+                                    Phi,
+                                    settings.flag_prob,
+                                    settings.flag_interp );
+
+            for ( int kt = 0; kt < Rec.cols(); kt++)
+                Rec.col(kt) = Rec.col(kt) + mean.segment(kt*Nr, Nr);
+
+            std::cout << "Writing reconstructed field ..." << "\t";
+
+            write_Reconstructed_fields ( Rec, Coords,
+                                    settings.out_file,
+                                    settings.flag_prob, i );
+
+            std::cout << "Done" << std::endl << std::endl << std::endl;            
+
+        }
+
     }
 
+    std::cout << "Adaptive Reconstruction RBM-Clyde ends " << std::endl;
 
     return 0;
 }

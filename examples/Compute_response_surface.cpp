@@ -48,15 +48,15 @@ int main( int argc, char *argv[] )
         norm_sn_set(i) = sn_set.col(i).norm();
     }
 
+    for ( int nt = 0; nt < settings.Ns; nt++ )
+        sn_set.col(nt) -= mean;
+
 //Defining common scope for POD-SPOD
     {
         Eigen::VectorXd lambda(settings.Ns);
         Eigen::VectorXd K_pc(settings.Ns);
         Eigen::MatrixXd eig_vec(settings.Ns, settings.Ns);
         int Nrec;
-
-        for ( int nt = 0; nt < settings.Ns; nt++ )
-            sn_set.col(nt) -= mean;
     
         for ( int nfj = 0; nfj < Nf.size(); nfj++ )
         {
