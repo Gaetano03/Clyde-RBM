@@ -16,7 +16,7 @@ int main(int argc, char *argv[]) {
 
     //Reading configuration file
     Read_cfg( filecfg, settings );
-
+    Eigen::VectorXd K_pc(settings.Ns);
     
     Config_stream ( settings );
 
@@ -53,7 +53,6 @@ int main(int argc, char *argv[]) {
         std::cout << "Initialized vector of times " << std::endl;
 
         Eigen::VectorXd lambda(settings.Ns);
-        Eigen::VectorXd K_pc(settings.Ns);
         Eigen::MatrixXd eig_vec(settings.Ns, settings.Ns);
 
         if ( settings.flag_mean == "YES" )
@@ -513,8 +512,8 @@ int main(int argc, char *argv[]) {
         std::cout << std::endl;
         std::cout << "Initialized vector of times " << std::endl;
 
-        Eigen::VectorXd lambda = Eigen::VectorXd::Zero(3*settings.Ns);
-        Eigen::MatrixXd Coefs = Eigen::MatrixXd::Zero(3*settings.Ns, settings.Ns);
+        Eigen::VectorXd lambda = Eigen::VectorXd::Zero(settings.Ns);
+        Eigen::MatrixXd Coefs = Eigen::MatrixXd::Zero(settings.Ns, settings.Ns);
         Eigen::MatrixXd Phi;
 
         if ( settings.flag_mean == "YES" )
@@ -527,23 +526,24 @@ int main(int argc, char *argv[]) {
         if ( argc == 2 )
         {
             std::cout << "Extracting basis and Coeffs RDMD ... " << "\t";        
-
         
             Phi = RDMD_modes_coefs ( sn_set,
                                     Coefs,
-                                    lambda,     
+                                    lambda,
+                                    K_pc,     
                                     settings.r,
                                     settings.r_RDMD,
                                     settings.En );
-
+                                
         }
         else
         {
 
             std::cout << "Reading basis and extracting Coeffs RDMD ... " << "\t";
             std::string file_modes = argv[2];
+            std::string file_coefs = argv[3];
             Phi = read_modes( file_modes, settings.ndim*Nr, settings.r_RDMD );
-            Coefs = Phi.transpose()*sn_set;
+            Coefs = read_coefs( file_coefs, settings.Ns, settings.r_RDMD );
 
         }
 
@@ -555,8 +555,18 @@ int main(int argc, char *argv[]) {
 
         if ( settings.flag_wdb_be == "YES" )
         {
-            std::cout << "Writing modes ..." << "\t"; //Writing one mode for all variables (ex (u,v)---> Phi1 = (Phiu1;Phiv1))
+            std::cout << "Writing modes and coeffs..." << "\t"; //Writing one mode for all variables (ex (u,v)---> Phi1 = (Phiu1;Phiv1))
             write_modes ( Phi.leftCols(settings.r_RDMD) );
+            write_coefs ( Coefs.leftCols(settings.r_RDMD));
+
+            std::ofstream flow_data;
+            flow_data.open("EnRDMD.dat"); 
+
+            for ( int i = 0; i < settings.Ns; i++ )
+                flow_data << std::setprecision(12) << std::scientific << K_pc(i) <<  " ";           
+            // Close file
+            flow_data.close();
+
             std::cout << "Complete!" << std::endl;
 
             // std::cout << "Writing Coefficients ..." << "\t";

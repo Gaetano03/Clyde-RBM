@@ -438,7 +438,8 @@ int main( int argc, char *argv[] )
         
             Phi = RDMD_modes_coefs ( sn_set,
                                     Coefs,
-                                    lambda,     
+                                    lambda,
+                                         
                                     settings.r,
                                     settings.r_RDMD,
                                     settings.En );

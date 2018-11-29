@@ -570,6 +570,57 @@ Eigen::MatrixXd read_modes( std::string filename, int Nr, int r_RDMD )
 }
 
 
+Eigen::MatrixXd read_coefs( std::string filename, int Ns, int r_RDMD )
+{
+
+    Eigen::MatrixXd f(r_RDMD, Ns);
+
+    std::ifstream Coefs_data;
+    Coefs_data.open( filename );
+
+    if ( !Coefs_data.is_open() )
+    {
+        std::cout << "File : " << filename << " not found" << std::endl;    
+        exit (EXIT_FAILURE);
+    }
+
+    std::string line_flow_data ;
+
+    // Read row of headers
+    getline( Coefs_data, line_flow_data );
+
+    int n_row = 0;
+
+    int count = 0;
+    while ( getline( Coefs_data, line_flow_data ) && n_row < r_RDMD )
+    {
+
+        Eigen::RowVectorXd point(Ns);
+        std::istringstream iss(line_flow_data);
+        std::string token;
+        double rubbish;
+        int count = 0, c = 0; 
+
+        while( getline( iss, token, ' ') )
+        {
+            rubbish = std::stod(token);
+            point(count) = rubbish;
+            
+            count ++;
+        } 
+
+        f.row(n_row) = point; 
+        n_row++;
+
+    }
+
+    Coefs_data.close();
+
+    return f;
+}
+
+
+
 Eigen::MatrixXd read_err_j ( std::string filename, int Ns )
 {
         std::ifstream file_data;

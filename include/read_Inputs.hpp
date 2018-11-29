@@ -119,6 +119,9 @@ Eigen::MatrixXd read_col( std::string filename, int Nr, std::vector<int> Cols );
 // read modes for Recursive DMD
 Eigen::MatrixXd read_modes( std::string filename, int Nr, int r_RDMD );
 
+// read coeffs for Recursive DMD
+Eigen::MatrixXd read_coefs( std::string filename, int Ns, int r_RDMD );
+
 // read Errors and Jaccard index for adaptive reconstruction
 Eigen::MatrixXd read_err_j ( std::string filename, int Ns );
 

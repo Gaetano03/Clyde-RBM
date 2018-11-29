@@ -234,6 +234,7 @@ int main( int argc, char *argv[] )
     {
 
         Eigen::VectorXd lambda = Eigen::VectorXd::Zero(settings.Ns);
+        Eigen::VectorXd K_pc = Eigen::VectorXd::Zero(settings.Ns);
         Eigen::MatrixXd Coefs = Eigen::MatrixXd::Zero(settings.Ns, settings.Ns); 
         Eigen::MatrixXd Phi;
 
@@ -243,7 +244,8 @@ int main( int argc, char *argv[] )
         
             Phi = RDMD_modes_coefs ( sn_set,
                                     Coefs,
-                                    lambda,     
+                                    lambda,
+                                    K_pc,     
                                     settings.r,
                                     settings.r_RDMD,
                                     settings.En );
@@ -252,8 +254,9 @@ int main( int argc, char *argv[] )
         {
             std::cout << "Reading basis and extracting Coeffs RDMD ... " << "\t";
             std::string file_modes = argv[2];
+            std::string file_coefs = argv[3];
             Phi = read_modes( file_modes, settings.ndim*Nr, settings.r_RDMD );
-            Coefs = Phi.transpose()*sn_set;
+            Coefs = read_coefs( file_coefs, settings.Ns, settings.r_RDMD );
         }
 
         std::cout << " Done! " << std::endl;

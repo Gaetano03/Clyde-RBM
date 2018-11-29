@@ -40,11 +40,11 @@ void write_Reconstructed_fields ( const Eigen::MatrixXd Rec,
                                     std::string flag_prob,
                                     const int nt );
 
+void write_modes ( const Eigen::MatrixXd &Phi_cut ); //write modes RDMD
 
-void write_modes ( const Eigen::MatrixXd &Phi_cut );
+void write_coefs ( const Eigen::MatrixXd &Coefs ); //write coefs RDMD
 
-
-void write_err_j ( const Eigen::MatrixXd data, std::string filename);
+void write_err_j ( const Eigen::MatrixXd data, std::string filename); //write error/jaccard surface for RBM method
 
 
 #endif // WRITE_OUTPUTS_HPP

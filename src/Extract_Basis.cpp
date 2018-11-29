@@ -202,22 +202,16 @@ std::string method_selected ( int n, int &Nf_SPOD, std::vector<int> Nf )
 
     if ( (n > -1) && (n < (Nf.size() + 1)) )
     {
-        if ( n == 0 )
-            Nf_SPOD = 0;
-        
-        for ( int i = 1; i < Nf.size()+1; i++ )
+        for ( int i = 0; i < Nf.size(); i++ )
         {
             if ( n == i )
-                Nf_SPOD = Nf[i-1];
-        }
-                
+                Nf_SPOD = Nf[i];
+        }                
         return "SPOD";
     }
-    else if ( n == (Nf.size() + 1) )
+    else if ( n == Nf.size() )
         return "DMD";
-    else if ( n == (Nf.size() + 2) )
-        return "mrDMD";
-    else if ( n == (Nf.size() + 3) )
+    else if ( n == (Nf.size() + 1) )
         return "RDMD";
     else 
     {
@@ -851,6 +845,7 @@ std::vector<node_mrDMD> mrDMD_basis( Eigen::MatrixXd &snap_set,
 Eigen::MatrixXd RDMD_modes_coefs ( const Eigen::MatrixXd &sn_set,
                                     Eigen::MatrixXd &Coefs,
                                     Eigen::VectorXd &lambda,
+                                    Eigen::VectorXd &K_pc,
                                     const int r,
                                     int &rdmd,
                                     double En )
@@ -949,7 +944,7 @@ Eigen::MatrixXd RDMD_modes_coefs ( const Eigen::MatrixXd &sn_set,
     }
     else
     {
-         for ( int i = 0; i < rdmd; i++ )
+         for ( int i = 0; i <= rdmd; i++ )
         {
             
             //Perform pure DMD
@@ -965,6 +960,16 @@ Eigen::MatrixXd RDMD_modes_coefs ( const Eigen::MatrixXd &sn_set,
 
             svd_new = lam_POD.cwiseProduct(lam_POD);
             eps = (svd_old.sum() - svd_new.sum())/svd_old.sum();
+            
+            if ( i > 0 )
+                K_pc(i-1) = eps;
+            
+            count ++;
+            
+            std::cout << "Energy at Iteration " << i << " : " << std::setprecision(12) << eps*100 << "%" << std::endl;
+            
+            if ( i == rdmd )
+                break;
 
         // std::cout << "size Phi : [" << Phi.rows() << ", " << Phi.cols() << "]" << std::endl; 
         // std::cout << "Done line 767" << std::endl;
@@ -1013,9 +1018,8 @@ Eigen::MatrixXd RDMD_modes_coefs ( const Eigen::MatrixXd &sn_set,
         // std::cout << "Done line 811" << std::endl;
             res_set = res_set - Phi_RDMD.col(i)*Coefs.row(i);
         // std::cout << "Done line 813" << std::endl;
-            std::cout << "Energy at Iteration " << i << " : " << std::setprecision(12) << eps*100 << "%" << std::endl;
 
-            count ++;
+
 
         }
     }

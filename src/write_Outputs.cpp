@@ -731,7 +731,7 @@ void write_modes ( const Eigen::MatrixXd &Phi_cut )
 {
     
     int Nr = Phi_cut.rows(); 
-    std::string filename = "Modes.dat";
+    std::string filename = "ModesRDMD.dat";
     std::ofstream flow_data;
     flow_data.open(filename.c_str()); 
 
@@ -760,6 +760,39 @@ void write_modes ( const Eigen::MatrixXd &Phi_cut )
 
 }
 
+
+void write_coefs ( const Eigen::MatrixXd &Coefs )
+{
+    
+    int Nt = Coefs.rows(); 
+    std::string filename = "CoefsRDMD.dat";
+    std::ofstream flow_data;
+    flow_data.open(filename.c_str()); 
+
+    // Write row of Headers
+    std::string coef;
+
+    for ( int i = 0; i < Coefs.cols(); i++ )
+    {
+        coef = "\"Coef_t" + std::to_string(i+1) + "\""; 
+        flow_data << coef << " ";
+    }
+
+    flow_data << std::endl;
+
+    //Write fields
+    for ( int i = 0; i < Nt; i++ )
+    {    
+        for (int j = 0; j < Coefs.cols(); j++)
+            flow_data << std::setprecision(12) << std::scientific << Coefs(i,j) <<  " ";           
+
+        flow_data << std::endl;
+    }
+    // Close file
+    flow_data.close();
+
+
+}
 
 
 
