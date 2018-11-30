@@ -23,6 +23,7 @@ int main( int argc, char *argv[] )
     Nf[4] = settings.Ns;
     std::vector<Eigen::MatrixXd> Err_RBM_Nm_time;
     std::vector<Eigen::MatrixXd> J_RBM_Nm_time;
+    std::vector<Eigen::VectorXd> EN;
 
     // Calculate number of grid points
     int Nr = N_gridpoints ( settings.in_file );
@@ -50,6 +51,8 @@ int main( int argc, char *argv[] )
 
     for ( int nt = 0; nt < settings.Ns; nt++ )
         sn_set.col(nt) -= mean;
+
+
 
 //Defining common scope for POD-SPOD
     {
@@ -119,6 +122,7 @@ int main( int argc, char *argv[] )
 
             Err_RBM_Nm_time.push_back(Err_SPOD_Nm_time);
             J_RBM_Nm_time.push_back(J_SPOD_Nm_time);
+            EN.push_back(K_pc);
 
             std::cout << "Done" << std::endl;
         }
@@ -134,6 +138,7 @@ int main( int argc, char *argv[] )
         Eigen::MatrixXd eig_vec_POD;
         Eigen::VectorXcd lambda_DMD;
         Eigen::MatrixXcd eig_vec_DMD;
+        
 
         std::cout << "Extracting basis DMD using rank " << settings.r << "\t";        
         Eigen::MatrixXcd Phi;
@@ -176,6 +181,13 @@ int main( int argc, char *argv[] )
 
         dmd_sort( En, Phi, lambda_DMD, alfa);
         std::cout << "Done" << std::endl;
+
+        double sum = 0;
+        Eigen::VectorXd K_pc = Eigen::VectorXd::Zero(settings.Ns);
+        for (int i = 0; i < Phi.cols(); i++){
+            sum += En(i)/En.sum();
+            K_pc(i) = sum;
+        }
 
         std::cout << "Computing error and Jaccard index surface ... " << std::endl << std::endl;
 
@@ -226,7 +238,7 @@ int main( int argc, char *argv[] )
 
         Err_RBM_Nm_time.push_back(Err_DMD_Nm_time);
         J_RBM_Nm_time.push_back(J_DMD_Nm_time);
-
+        EN.push_back(K_pc);
     }
     
 
@@ -255,8 +267,29 @@ int main( int argc, char *argv[] )
             std::cout << "Reading basis and extracting Coeffs RDMD ... " << "\t";
             std::string file_modes = argv[2];
             std::string file_coefs = argv[3];
+            std::string file_En = argv[4];
             Phi = read_modes( file_modes, settings.ndim*Nr, settings.r_RDMD );
             Coefs = read_coefs( file_coefs, settings.Ns, settings.r_RDMD );
+
+            std::ifstream En_data;
+            En_data.open( file_En );
+            if ( !En_data.is_open() )
+            {
+                std::cout << "File : " << file_En << " not found" << std::endl;    
+                exit (EXIT_FAILURE);
+            }
+            std::string line_flow_data ;
+            getline( En_data, line_flow_data );
+            std::istringstream iss(line_flow_data);
+            std::string token;
+
+            int count = 0;
+            while( getline( iss, token, ' ') )
+            {
+                K_pc(count) = std::stod(token);
+                count ++;
+            } 
+            En_data.close();
         }
 
         std::cout << " Done! " << std::endl;
@@ -298,11 +331,11 @@ int main( int argc, char *argv[] )
 
         Err_RBM_Nm_time.push_back(Err_RDMD_Nm_time);
         J_RBM_Nm_time.push_back(J_RDMD_Nm_time);
-
+        EN.push_back(K_pc);
     }
 
 
-    std::cout << "Writing error and Jaccard index error files ... " << "\t";
+    std::cout << "Writing error and Jaccard index error files ... " << std::endl;
     // -------- Nm ---------
     // |                    |
     // |                    |
@@ -330,6 +363,25 @@ int main( int argc, char *argv[] )
     write_err_j( Err_RBM_Nm_time[s_Nf+1], filename1 );
     filename2 = "Jaccard_RDMD.dat";
     write_err_j( J_RBM_Nm_time[s_Nf+1], filename2 );
+
+
+    std::cout << "Writing energetic content ... " << std::endl;
+
+    std::ofstream datafile;
+    datafile.open("Encontent_RBM.dat");
+
+    for( int j = 0; j < EN.size(); j++ ) 
+    {
+        for ( int nm = 0; nm < settings.Ns; nm ++ )
+            datafile <<  std::setprecision(8) << EN[j](nm) << "\t";
+
+        datafile << std::endl;
+
+    }
+
+    datafile.close();
+
+    std::cout << "RBM-Clyde error surface calculation ends" << std::endl << std::endl;
 
     return 0;
 
