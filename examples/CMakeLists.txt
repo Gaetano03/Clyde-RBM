@@ -19,5 +19,8 @@ target_link_libraries (prova clyde-rbm ${MANDATORY_LIBRARIES})
 add_executable (Compute_response_surface Compute_response_surface.cpp)
 target_link_libraries (Compute_response_surface clyde-rbm ${MANDATORY_LIBRARIES})
 
+add_executable (Compute_error_out_of_T Compute_error_out_of_T.cpp)
+target_link_libraries (Compute_error_out_of_T clyde-rbm ${MANDATORY_LIBRARIES})
+
 add_executable (Compute_Adaptive_reconstruction Compute_Adaptive_reconstruction.cpp)
 target_link_libraries (Compute_Adaptive_reconstruction clyde-rbm ${MANDATORY_LIBRARIES})

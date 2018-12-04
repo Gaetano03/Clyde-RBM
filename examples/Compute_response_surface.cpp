@@ -130,6 +130,8 @@ int main( int argc, char *argv[] )
     }
 
 
+    for ( int nt = 0; nt < settings.Ns; nt++ )
+        sn_set.col(nt) += mean;
     
 //Defining scope for DMD ( Rank=-1 preferable, Coeffs = OPT )
     {
@@ -241,6 +243,8 @@ int main( int argc, char *argv[] )
         EN.push_back(K_pc);
     }
     
+    for ( int nt = 0; nt < settings.Ns; nt++ )
+        sn_set.col(nt) -= mean;
 
 //Defining scope for RDMD
     {

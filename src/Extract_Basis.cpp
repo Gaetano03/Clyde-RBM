@@ -1190,8 +1190,6 @@ Eigen::MatrixXcd HODMD_basis( const Eigen::MatrixXd &snap_set,
                                         lambda,  
                                         eig_vec );
 
-
-
     return U.leftCols(N_svd2)*eig_vec;
 
 }
