@@ -48,7 +48,8 @@ int main( int argc, char *argv[] )
 
     std::cout << "Computing mean of CFD solution ... " << std::endl;
     Eigen::VectorXd mean = sn_set.rowwise().mean();
-    
+
+
     Eigen::VectorXd norm_sn_set = Eigen::VectorXd::Zero(settings.Ns-1);
 
     std::cout << "Reading matrix for check ... " << std::endl;
@@ -56,18 +57,21 @@ int main( int argc, char *argv[] )
                                                         settings.Cols,
                                                         settings.in_file,
                                                         settings.flag_prob);
-    
-    Eigen::VectorXd mean_check = sn_set.rowwise().mean();
+    // Eigen::VectorXd mean_check = sn_set_check.rowwise().mean();
+    // Eigen::VectorXd mean_check = sn_set.rowwise().mean();
 
     for ( int i = 0; i < settings.Ns-1; i ++ )
     {
         norm_sn_set(i) = sn_set_check.col(i).norm();
     }
 
-// //Defining common scope for POD-SPOD
+//Defining common scope for POD-SPOD
     {
         for ( int nt = 0; nt < settings.Ns; nt++ )
             sn_set.col(nt) -= mean;
+
+        for ( int nt = 0; nt < settings.Ns-1; nt++ )
+            sn_set_check.col(nt) -= mean;
 
         Eigen::VectorXd lambda(settings.Ns);
         Eigen::VectorXd K_pc(settings.Ns);
@@ -112,18 +116,25 @@ int main( int argc, char *argv[] )
             for ( int i = 0; i < Nm; i++ )
                 Sig(i,i) = std::sqrt(lambda(i));
 
-            std::cout << "Computing error and Jaccard index vector..." << "\t";
+            std::cout << "Computing error of interpolation and error from projection..." << "\t";
 
             Eigen::MatrixXd Err_SPOD_map = Eigen::MatrixXd::Zero( sn_set.rows(), sn_set_check.cols() );
+            Eigen::MatrixXd Err_PSPOD_map = Eigen::MatrixXd::Zero( sn_set.rows(), sn_set_check.cols() );
             Eigen::VectorXd Err_SPOD_Nm_time = Eigen::VectorXd::Zero(settings.Ns-1);
             Eigen::VectorXd J_SPOD_Nm_time = Eigen::VectorXd::Zero(settings.Ns-1);
             
             Err_SPOD_map = sn_set_check - Phi.leftCols(Nm)*Sig*coef_t.transpose();
+
+            Eigen::MatrixXd PhiTPhi = Phi.leftCols(Nm).transpose()*Phi.leftCols(Nm);
+            Eigen::MatrixXd dumCoefs = Phi.leftCols(Nm).transpose()*sn_set_check;
+
+            Err_PSPOD_map = sn_set_check - Phi.leftCols(Nm)*(PhiTPhi.inverse()*dumCoefs);
             
-            for ( int i = 0; i < Err_SPOD_map.cols(); i++ )
-            {
-                Err_SPOD_map.col(i) -= mean; 
-            }
+            // for ( int i = 0; i < Err_SPOD_map.cols(); i++ )
+            // {
+            //     Err_SPOD_map.col(i) -= mean;
+            //     Err_PSPOD_map.col(i) -= mean;
+            // }
 
             for ( int i = 0; i < settings.Ns-1; i++ )
             {
@@ -132,13 +143,11 @@ int main( int argc, char *argv[] )
                 for ( int j = 0; j < settings.ndim*Nr; j++ )
                 {
                     Err_SPOD_Nm_time(i) += Err_SPOD_map(j,i)*Err_SPOD_map(j,i);
-                
-                    if ( Err_SPOD_map(j,i) < 0.1)
-                        count++;
+                    J_SPOD_Nm_time(i) += Err_PSPOD_map(j,i)*Err_PSPOD_map(j,i);
                 }
                 
                 Err_SPOD_Nm_time(i) = std::sqrt(Err_SPOD_Nm_time(i))/norm_sn_set(i);
-                J_SPOD_Nm_time(i) = (double)count/((double)settings.ndim*(double)Nr);
+                J_SPOD_Nm_time(i) = std::sqrt(J_SPOD_Nm_time(i))/norm_sn_set(i);
             
             }     
 
@@ -155,7 +164,10 @@ int main( int argc, char *argv[] )
     for ( int nt = 0; nt < settings.Ns; nt++ )
         sn_set.col(nt) += mean;
     
-// //Defining scope for DMD ( Rank=-1 preferable, Coeffs = OPT )
+    for ( int nt = 0; nt < settings.Ns-1; nt++ )
+        sn_set_check.col(nt) += mean;
+
+//Defining scope for DMD ( Rank=-1 preferable, Coeffs = OPT )
     {
 
         Eigen::VectorXd lambda_POD;
@@ -217,7 +229,7 @@ int main( int argc, char *argv[] )
         int Nm = Nmod(settings.En, K_pc);
         std::cout << "Number of modes for the desired energetic content : " << Nm << std::endl;
 
-        std::cout << "Computing error and Jaccard index surface ... " << std::endl << std::endl;
+        std::cout << "Computing error of DMD and error from projection ... " << std::endl << std::endl;
 
         Eigen::MatrixXcd V_and(lambda_DMD.size(), settings.Ns-1);      
         for ( int i = 0; i < lambda_DMD.size(); i++ )
@@ -230,6 +242,7 @@ int main( int argc, char *argv[] )
             Psi.col(i) = alfa.cwiseProduct(V_and.col(i));
   
         Eigen::MatrixXd Err_DMD_map(sn_set.rows(), sn_set_check.cols());
+        Eigen::MatrixXd Err_PDMD_map(sn_set.rows(), sn_set_check.cols());
         Eigen::VectorXd Err_DMD_Nm_time = Eigen::VectorXd::Zero(settings.Ns-1);
         Eigen::VectorXd J_DMD_Nm_time = Eigen::VectorXd::Zero(settings.Ns-1);
 
@@ -237,18 +250,24 @@ int main( int argc, char *argv[] )
         Eigen::MatrixXcd D_dmd = Phi.leftCols(Nm)*Psi.topRows(Nm);
         Err_DMD_map = sn_set_check - D_dmd.real();
 
+        Eigen::MatrixXcd PhiTPhi = Phi.leftCols(Nm).transpose()*Phi.leftCols(Nm);
+        Eigen::MatrixXcd dumCoefs = Phi.leftCols(Nm).transpose()*sn_set_check;
+        Eigen::MatrixXcd P_u = Phi.leftCols(Nm)*(PhiTPhi.inverse()*dumCoefs);
+        Err_PDMD_map = sn_set_check - P_u.real();
+
+
         for ( int i = 0; i < settings.Ns-1; i++ )
         {
             int count = 0;
             for ( int j = 0; j < settings.ndim*Nr; j++ )
             { 
                 Err_DMD_Nm_time(i) += Err_DMD_map(j,i)*Err_DMD_map(j,i);
-                if ( Err_DMD_map(j,i) < 0.1 )
-                    count++;
+                J_DMD_Nm_time(i) += Err_PDMD_map(j,i)*Err_PDMD_map(j,i);
             }
 
             Err_DMD_Nm_time(i) = std::sqrt(Err_DMD_Nm_time(i))/norm_sn_set(i);
-            J_DMD_Nm_time(i) = (double)count/((double)settings.ndim*(double)Nr);
+            J_DMD_Nm_time(i) = std::sqrt(J_DMD_Nm_time(i))/norm_sn_set(i);
+
         }
 
         
@@ -257,17 +276,22 @@ int main( int argc, char *argv[] )
         Err_RBM_Nm_time.push_back(Err_DMD_Nm_time);
         J_RBM_Nm_time.push_back(J_DMD_Nm_time);
         EN.push_back(K_pc);
+        std::cout << "Done" << std::endl;
     }
     
+
     for ( int nt = 0; nt < settings.Ns; nt++ )
         sn_set.col(nt) -= mean;
 
-// //Defining scope for RDMD
+    for ( int nt = 0; nt < settings.Ns-1; nt++ )
+        sn_set_check.col(nt) -= mean;
+
+//Defining scope for RDMD
     {
 
         Eigen::VectorXd lambda = Eigen::VectorXd::Zero(settings.Ns);
         Eigen::VectorXd K_pc = Eigen::VectorXd::Zero(settings.Ns);
-        Eigen::MatrixXd Coefs = Eigen::MatrixXd::Zero(settings.Ns, settings.Ns); 
+        Eigen::MatrixXd Coefs = Eigen::MatrixXd::Zero(settings.Ns, settings.Ns);
         Eigen::MatrixXd Phi;
 
         if ( argc == 2 )
@@ -281,6 +305,7 @@ int main( int argc, char *argv[] )
                                     settings.r,
                                     settings.r_RDMD,
                                     settings.En );
+            
         }
         else
         {
@@ -290,6 +315,7 @@ int main( int argc, char *argv[] )
             std::string file_En = argv[4];
             Phi = read_modes( file_modes, settings.ndim*Nr, settings.r_RDMD );
             Coefs = read_coefs( file_coefs, settings.Ns, settings.r_RDMD );
+
 
             std::ifstream En_data;
             En_data.open( file_En );
@@ -304,7 +330,7 @@ int main( int argc, char *argv[] )
             std::string token;
 
             int count = 0;
-            while( getline( iss, token, ' ') )
+            while( getline( iss, token, ' ') && count < K_pc.size() )
             {
                 K_pc(count) = std::stod(token);
                 count ++;
@@ -334,11 +360,21 @@ int main( int argc, char *argv[] )
 
         std::cout << "Computing error and Jaccard index surface ... " << std::endl << std::endl;
         Eigen::MatrixXd Err_RDMD_map;
+        Eigen::MatrixXd Err_PRDMD_map;
         Eigen::VectorXd Err_RDMD_Nm_time = Eigen::VectorXd::Zero(settings.Ns-1);
         Eigen::VectorXd J_RDMD_Nm_time = Eigen::VectorXd::Zero(settings.Ns-1);
 
  
-        Err_RDMD_map = sn_set - Phi.leftCols(Nm)*coef_t.transpose();
+        // Err_RDMD_map = sn_set_check - Phi.leftCols(Nm)*coef_t.transpose();
+        Err_RDMD_map = sn_set_check - Phi.leftCols(Nm)*coef_t.transpose();
+        Err_PRDMD_map = sn_set_check - Phi.leftCols(Nm)*(Phi.leftCols(Nm).transpose()*sn_set_check);
+
+        // for ( int i = 0; i < Err_RDMD_map.cols(); i++ )
+        // {
+        //     Err_RDMD_map.col(i) -= mean;
+        //     Err_PRDMD_map.col(i) -= mean;
+        // }
+
         for ( int i = 0; i < settings.Ns-1; i++ )
         {
             int count = 0;
@@ -346,12 +382,12 @@ int main( int argc, char *argv[] )
             for ( int j = 0; j < settings.ndim*Nr; j++ )
             {
                 Err_RDMD_Nm_time(i) += Err_RDMD_map(j,i)*Err_RDMD_map(j,i);
-                if ( Err_RDMD_map(j,i) < 0.1 )
-                    count++;
+                J_RDMD_Nm_time(i) += Err_PRDMD_map(j,i)*Err_PRDMD_map(j,i);
+
             }
 
             Err_RDMD_Nm_time(i) = std::sqrt(Err_RDMD_Nm_time(i))/norm_sn_set(i);
-            J_RDMD_Nm_time(i) = (double)count/((double)settings.ndim*(double)Nr);
+            J_RDMD_Nm_time(i) = std::sqrt(J_RDMD_Nm_time(i))/norm_sn_set(i);
         }
  
         Err_RBM_Nm_time.push_back(Err_RDMD_Nm_time);
@@ -360,7 +396,7 @@ int main( int argc, char *argv[] )
     }
 
 
-    std::cout << "Writing error and Jaccard index error files ... " << std::endl;
+    std::cout << "Writing error of interpolation and error from projection ... " << std::endl;
 
     std::ofstream errfile;
     errfile.open("Err_RBM.dat");
@@ -375,6 +411,20 @@ int main( int argc, char *argv[] )
     }
 
     errfile.close();
+
+    std::ofstream errp;
+    errp.open("ErrP_RBM.dat");
+
+    for ( int nm = 0; nm < settings.Ns-1; nm ++ )    
+    {
+        for( int j = 0; j < Err_RBM_Nm_time.size(); j++ ) 
+            errp <<  std::setprecision(8) << J_RBM_Nm_time[j](nm) << "\t";
+
+        errp << std::endl;
+
+    }
+
+    errp.close();
 
 
     std::cout << "Writing energetic content ... " << std::endl;

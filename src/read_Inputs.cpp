@@ -601,7 +601,7 @@ Eigen::MatrixXd read_coefs( std::string filename, int Ns, int r_RDMD )
         double rubbish;
         int count = 0, c = 0; 
 
-        while( getline( iss, token, ' ') )
+        while( getline( iss, token, ' ') && count < Ns )
         {
             rubbish = std::stod(token);
             point(count) = rubbish;
