@@ -322,8 +322,8 @@ int main( int argc, char *argv[] )
 
                 Rec = Reconstruction_DMD ( settings.t_rec[nt],
                                         settings.Dt_cfd*settings.Ds,
-                                        alfa,
-                                        Phi,
+                                        alfa.head(Nm),
+                                        Phi.leftCols(Nm),
                                         lambda_DMD,
                                         settings.flag_prob );
 
@@ -470,8 +470,8 @@ int main( int argc, char *argv[] )
 
                 Rec = Reconstruction_RDMD ( settings.t_rec[nt],
                                         t_vec,
-                                        Coefs,
-                                        Phi,
+                                        Coefs.topRows(Nm),
+                                        Phi.leftCols(Nm),
                                         settings.flag_prob,
                                         settings.flag_interp );
 
