@@ -29,6 +29,10 @@ int main( int argc, char *argv[] )
     int Nr = N_gridpoints ( settings.in_file );
     std::cout << "Number of grid points : " << Nr << std::endl;
 
+    std::cout << "Reading Coordinates ... \t ";
+    Eigen::MatrixXd Coords = read_col( settings.in_file, Nr, settings.Cols_coords );
+    std::cout << "Done " << std::endl;
+
     std::cout << "Storing snapshot Matrix ... \n ";
     Eigen::MatrixXd sn_set = generate_snap_matrix( Nr, settings.Ns, settings.Ds, settings.nstart,
                                         settings.Cols,
@@ -156,6 +160,39 @@ int main( int argc, char *argv[] )
             EN.push_back(K_pc);
 
             std::cout << "Done" << std::endl;
+
+            if ( settings.flag_rec == "YES" )
+            {
+                for ( int nt = 0; nt < settings.t_rec.size(); nt++ )
+                {
+
+                    std::cout << "Reconstructing field at time : " << settings.t_rec[nt] << "\t";
+
+                    Eigen::MatrixXd Rec = Reconstruction_S_POD ( t_vec,
+                                        K_pc, lambda, eig_vec.transpose(),
+                                        Phi, settings.t_rec[nt],
+                                        settings.En,
+                                        settings.flag_prob,
+                                        settings.flag_interp ) ;
+
+                    std::cout << "Done" << std::endl;
+
+                    for ( int i = 0; i < Rec.cols(); i++)
+                        Rec.col(i) = Rec.col(i) + mean.segment(i*Nr, Nr);
+
+                    std::cout << "Writing reconstructed field ..." << "\t";
+                    std::string filename = "Rec_flow_SPOD_Nf" + std::to_string(Nf[nfj]) + ".dat";
+
+                    write_Reconstructed_fields ( Rec, Coords,
+                                            filename,
+                                            settings.flag_prob, nt );
+
+                    std::cout << "Done" << std::endl << std::endl;
+                }
+            }
+
+
+
         }
     
     }
@@ -270,13 +307,41 @@ int main( int argc, char *argv[] )
 
         }
 
-        
-        
-
         Err_RBM_Nm_time.push_back(Err_DMD_Nm_time);
         J_RBM_Nm_time.push_back(J_DMD_Nm_time);
         EN.push_back(K_pc);
         std::cout << "Done" << std::endl;
+
+        if ( settings.flag_rec == "YES" )
+        {
+                         
+            for ( int nt = 0; nt < settings.t_rec.size(); nt ++)
+            {
+                Eigen::MatrixXcd Rec;
+                std::cout << "Reconstructing field at time : " << settings.t_rec[nt] << "\t";
+
+                Rec = Reconstruction_DMD ( settings.t_rec[nt],
+                                        settings.Dt_cfd*settings.Ds,
+                                        alfa,
+                                        Phi,
+                                        lambda_DMD,
+                                        settings.flag_prob );
+
+                std::cout << "Done" << std::endl;
+                std::cout << "Writing reconstructed field ..." << "\t";
+
+                std::string filename = "Rec_flow_DMD.dat";
+                write_Reconstructed_fields ( Rec.real(), Coords,
+                                        filename,
+                                        settings.flag_prob, nt );
+
+                std::cout << "Done" << std::endl << std::endl;
+
+            }
+
+        }
+
+
     }
     
 
@@ -393,6 +458,48 @@ int main( int argc, char *argv[] )
         Err_RBM_Nm_time.push_back(Err_RDMD_Nm_time);
         J_RBM_Nm_time.push_back(J_RDMD_Nm_time);
         EN.push_back(K_pc);
+
+        if ( settings.flag_rec == "YES" )
+        {
+                               
+            for ( int nt = 0; nt < settings.t_rec.size(); nt ++)
+            {
+                Eigen::MatrixXd Rec;
+                std::cout << "Reconstructing field at time : " << settings.t_rec[nt] << "\t";
+
+
+                Rec = Reconstruction_RDMD ( settings.t_rec[nt],
+                                        t_vec,
+                                        Coefs,
+                                        Phi,
+                                        settings.flag_prob,
+                                        settings.flag_interp );
+
+
+                std::cout << "Done" << std::endl;
+
+                if ( settings.flag_mean == "YES" )
+                {
+
+                    for ( int i = 0; i < Rec.cols(); i++)
+                        Rec.col(i) = Rec.col(i) + mean.segment(i*Nr, Nr);
+
+                }
+
+                std::cout << "Writing reconstructed field ..." << "\t";
+
+                std::string filename = "Rec_flow_RDMD.dat";
+                write_Reconstructed_fields ( Rec, Coords,
+                                        filename,
+                                        settings.flag_prob, nt );
+
+                std::cout << "Done" << std::endl << std::endl;
+
+            }
+
+        }
+
+
     }
 
 
