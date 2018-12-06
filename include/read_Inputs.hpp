@@ -43,9 +43,9 @@ struct prob_settings
     std::string flag_bc;        /*Type of boundary condition
                                     for correlation matrix, flag*/
 
-
+    int r;                      //user defined rank (can be used for POD/SPOD/DMD)
     //------Parameters for DMD-----------
-    int r;                      //rank of standard DMD
+    
                                 //if r=0 SVHT is used
     std::string dmd_coef_flag;  //method for coefficients calculation
     
@@ -90,7 +90,7 @@ enum keywords
                 FLAG_REC,
                 FLAG_INTERP,
                 T_REC,
-                RANK_DMD,
+                RANK,
                 DMD_COEF_FLAG,
                 RANK_RDMD,
                 HO_D,

@@ -48,10 +48,10 @@ keywords read_keyword_type( const std::string &key_string )
         return FLAG_INTERP;
     else if( key_string == "T_REC" )
         return T_REC;
-    else if( key_string == "RANK_DMD" )
-        return RANK_DMD;
     else if( key_string == "RANK_RDMD" )
         return RANK_RDMD;
+    else if( key_string == "RANK" )
+        return RANK;
     else if( key_string == "HO_D" )
         return HO_D;
     else if( key_string == "DMD_COEF_FLAG" )
@@ -236,7 +236,7 @@ void Read_cfg ( const std::string filename, prob_settings &settings )
                     break;
                 }
 
-                case RANK_DMD:
+                case RANK:
                 {
                     settings.r = std::stoi(value);
                     //std::cout << "DMD rank : " << value << std::endl;

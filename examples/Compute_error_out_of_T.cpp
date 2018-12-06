@@ -312,6 +312,16 @@ int main( int argc, char *argv[] )
         EN.push_back(K_pc);
         std::cout << "Done" << std::endl;
 
+
+//------Checking what s going on with DMD
+        Eigen::MatrixXcd rec_check(Nr,2);
+        rec_check.col(0) = D_dmd.col(0).topRows(Nr);
+        rec_check.col(1) = D_dmd.col(0).bottomRows(Nr);
+        write_Reconstructed_fields ( rec_check.real(), Coords,
+                        "rec_check.dat",
+                        settings.flag_prob, 0 );
+//-------------------------------------
+
         if ( settings.flag_rec == "YES" )
         {
                          
@@ -322,9 +332,9 @@ int main( int argc, char *argv[] )
 
                 Rec = Reconstruction_DMD ( settings.t_rec[nt],
                                         settings.Dt_cfd*settings.Ds,
-                                        alfa.head(Nm),
+                                        alfa.topRows(Nm),
                                         Phi.leftCols(Nm),
-                                        lambda_DMD,
+                                        lambda_DMD.head(Nm),
                                         settings.flag_prob );
 
                 std::cout << "Done" << std::endl;

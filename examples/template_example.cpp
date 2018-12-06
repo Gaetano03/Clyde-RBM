@@ -76,7 +76,12 @@ int main(int argc, char *argv[]) {
 
         std::cout << "Number of non-zero modes : " << Phi.cols() << std::endl;
 
-        int Nrec = Nmod( settings.En, K_pc);
+        int Nrec; 
+        if ( settings.r == -1 )
+            Nrec = Nmod( settings.En, K_pc);
+        else
+            Nrec = settings.r;
+
         std::cout << "Number of modes for the desired energy content : " << Nrec << std::endl;
 
         if ( settings.flag_wdb_be == "YES" )
