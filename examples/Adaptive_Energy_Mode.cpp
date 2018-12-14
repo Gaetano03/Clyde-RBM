@@ -22,7 +22,7 @@ int main( int argc, char *argv[] )
     Nf[3] = std::ceil(2.0*settings.Ns/3.0);
     Nf[4] = settings.Ns;
     std::vector<Eigen::VectorXd> Err_RBM_Nm_time;
-    std::vector<Eigen::VectorXd> J_RBM_Nm_time;
+    std::vector<Eigen::VectorXd> ErrP_RBM_Nm_time;
     std::vector<Eigen::VectorXd> EN;
 
     // Calculate number of grid points
@@ -69,6 +69,8 @@ int main( int argc, char *argv[] )
         norm_sn_set(i) = sn_set_check.col(i).norm();
     }
 
+    Eigen::VectorXd svd_cum_sum(settings.Ns);
+
 //Defining common scope for POD-SPOD
     {
         for ( int nt = 0; nt < settings.Ns; nt++ )
@@ -96,9 +98,16 @@ int main( int argc, char *argv[] )
 
             std::cout << " Done! " << std::endl;            
 
-            Nm = Nmod(settings.En, K_pc);
-            std::cout << "Number of modes for desired energetic content: " << Nm << std::endl;
-
+            if ( settings.r == 0 )
+            {
+                Nm = Nmod(settings.En, K_pc);
+                std::cout << "Number of modes for desired energetic content: " << Nm << std::endl;
+            }
+            else
+            {
+                Nm = settings.r;
+                std::cout << "Number of modes (fixed): " << Nm << std::endl;
+            }
             std::vector<rbf> surr_coefs =  getSurrCoefs (t_vec,
                                                         eig_vec,
                                                         settings.flag_interp);
@@ -156,7 +165,7 @@ int main( int argc, char *argv[] )
             }     
 
             Err_RBM_Nm_time.push_back(Err_SPOD_Nm_time);
-            J_RBM_Nm_time.push_back(J_SPOD_Nm_time);
+            ErrP_RBM_Nm_time.push_back(J_SPOD_Nm_time);
             EN.push_back(K_pc);
 
             std::cout << "Done" << std::endl;
@@ -218,12 +227,25 @@ int main( int argc, char *argv[] )
         Eigen::MatrixXcd Phi;
         Eigen::VectorXcd alfa;
 
-        Phi = DMD_basis( sn_set,
-                        lambda_DMD,
-                        eig_vec_DMD,
-                        lambda_POD,
-                        eig_vec_POD,
-                        settings.r );
+        if ( settings.r == 0 )
+        {
+            Phi = DMD_basis( sn_set,
+                            lambda_DMD,
+                            eig_vec_DMD,
+                            lambda_POD,
+                            eig_vec_POD,
+                            -1 );
+        }
+        else
+        {
+            Phi = DMD_basis( sn_set,
+                            lambda_DMD,
+                            eig_vec_DMD,
+                            lambda_POD,
+                            eig_vec_POD,
+                            settings.r );
+        }
+
 
         std::cout << " Done! " << std::endl;
 //         int Nm = Phi.cols();
@@ -238,7 +260,7 @@ int main( int argc, char *argv[] )
                                                             lambda_DMD, 
                                                             Phi );
         std::cout << " Done! " << std::endl;
-
+        
         std::cout << "Reordering modes DMD ... " << "\t";
         Eigen::VectorXd En = Eigen::VectorXd::Zero(Phi.cols());
         double T = t_vec[t_vec.size()-1];
@@ -264,9 +286,21 @@ int main( int argc, char *argv[] )
             K_pc(i) = sum;
         }
 
-        int Nm = Nmod(settings.En, K_pc);
-        std::cout << "Number of modes for the desired energetic content : " << Nm << std::endl;
+        int Nm;
 
+        if ( settings.r == 0)
+        {
+            Nm = Nmod(settings.En, K_pc);
+            std::cout << "Number of modes for the desired energetic content : " << Nm << std::endl;
+            
+        }
+        else
+        {
+            Nm = settings.r;
+            std::cout << "Number of modes (fixed) : " << Nm << std::endl;
+        }
+        
+        
         std::cout << "Computing error of DMD and error from projection ... " << std::endl << std::endl;
 
         Eigen::MatrixXcd V_and(lambda_DMD.size(), settings.Ns-1);      
@@ -309,18 +343,18 @@ int main( int argc, char *argv[] )
         }
 
         Err_RBM_Nm_time.push_back(Err_DMD_Nm_time);
-        J_RBM_Nm_time.push_back(J_DMD_Nm_time);
+        ErrP_RBM_Nm_time.push_back(J_DMD_Nm_time);
         EN.push_back(K_pc);
         std::cout << "Done" << std::endl;
 
 
 //------Checking what s going on with DMD
-        Eigen::MatrixXcd rec_check(Nr,2);
-        rec_check.col(0) = D_dmd.col(0).topRows(Nr);
-        rec_check.col(1) = D_dmd.col(0).bottomRows(Nr);
-        write_Reconstructed_fields ( rec_check.real(), Coords,
-                        "rec_check.dat",
-                        settings.flag_prob, 0 );
+        // Eigen::MatrixXcd rec_check(Nr,2);
+        // rec_check.col(0) = D_dmd.col(0).topRows(Nr);
+        // rec_check.col(1) = D_dmd.col(0).bottomRows(Nr);
+        // write_Reconstructed_fields ( rec_check.real(), Coords,
+        //                 "rec_check.dat",
+        //                 settings.flag_prob, 0 );
 //-------------------------------------
 
         if ( settings.flag_rec == "YES" )
@@ -363,6 +397,9 @@ int main( int argc, char *argv[] )
         sn_set_check.col(nt) -= mean;
 
 //Defining scope for RDMD
+//if using the function RDMD_modes_coefs for energybased select 
+//energy level and rank rdmd to zero, for mode based just select
+//rank rdmd to the number of desired modes
     {
 
         Eigen::VectorXd lambda = Eigen::VectorXd::Zero(settings.Ns);
@@ -389,8 +426,8 @@ int main( int argc, char *argv[] )
             std::string file_modes = argv[2];
             std::string file_coefs = argv[3];
             std::string file_En = argv[4];
-            Phi = read_modes( file_modes, settings.ndim*Nr, settings.r_RDMD );
-            Coefs = read_coefs( file_coefs, settings.Ns, settings.r_RDMD );
+            Phi = read_modes( file_modes, settings.ndim*Nr, settings.Ns );
+            Coefs = read_coefs( file_coefs, settings.Ns, settings.Ns );
 
 
             std::ifstream En_data;
@@ -416,8 +453,17 @@ int main( int argc, char *argv[] )
 
         std::cout << " Done! " << std::endl;
 
-        int Nm = Nmod(settings.En, K_pc);
-        std::cout << "number of modes for the desired energetic content " << Nm << std::endl;
+        int Nm;
+        if ( settings.r == 0 )
+        {
+            Nm = Nmod(settings.En, K_pc);
+            std::cout << "number of modes for the desired energetic content " << Nm << std::endl;
+        }
+        else
+        {
+            Nm = settings.r;
+            std::cout << "number of modes (fixed) " << Nm << std::endl;
+        }
 
         std::vector<rbf> surr_coefs =  getSurrCoefs (t_vec,
                                                     Coefs.transpose(),
@@ -434,7 +480,7 @@ int main( int argc, char *argv[] )
         }
 
 
-        std::cout << "Computing error and Jaccard index surface ... " << std::endl << std::endl;
+        std::cout << "Computing error RDMD and error from projection ... " << std::endl << std::endl;
         Eigen::MatrixXd Err_RDMD_map;
         Eigen::MatrixXd Err_PRDMD_map;
         Eigen::VectorXd Err_RDMD_Nm_time = Eigen::VectorXd::Zero(settings.Ns-1);
@@ -467,7 +513,7 @@ int main( int argc, char *argv[] )
         }
  
         Err_RBM_Nm_time.push_back(Err_RDMD_Nm_time);
-        J_RBM_Nm_time.push_back(J_RDMD_Nm_time);
+        ErrP_RBM_Nm_time.push_back(J_RDMD_Nm_time);
         EN.push_back(K_pc);
 
         if ( settings.flag_rec == "YES" )
@@ -536,7 +582,7 @@ int main( int argc, char *argv[] )
     for ( int nm = 0; nm < settings.Ns-1; nm ++ )    
     {
         for( int j = 0; j < Err_RBM_Nm_time.size(); j++ ) 
-            errp <<  std::setprecision(8) << J_RBM_Nm_time[j](nm) << "\t";
+            errp <<  std::setprecision(8) << ErrP_RBM_Nm_time[j](nm) << "\t";
 
         errp << std::endl;
 
@@ -566,4 +612,3 @@ int main( int argc, char *argv[] )
     return 0;
 
 }
-

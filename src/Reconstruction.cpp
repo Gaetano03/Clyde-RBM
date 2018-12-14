@@ -26,7 +26,8 @@ Eigen::MatrixXd Reconstruction_S_POD ( const std::vector<double> &t_vec,
                                 const Eigen::MatrixXd &Coeffs,
                                 const Eigen::MatrixXd &phi,
                                 const double time,
-                                const double En,
+                                // const double En,
+                                int Nrec,
                                 std::string flag_prob,
                                 std::string flag_interp ) 
 {
@@ -54,7 +55,7 @@ Eigen::MatrixXd Reconstruction_S_POD ( const std::vector<double> &t_vec,
     RBF_CONSTANTS rbf_const {avgDt, 0.0};
 
     // Define the number of modes Nrec to use in the reconstruction
-    int Nrec = Nmod(En, K_pc);
+    // int Nrec = Nmod(En, K_pc);
 
     for ( int i = 0; i < Nrec; i++ ){
         

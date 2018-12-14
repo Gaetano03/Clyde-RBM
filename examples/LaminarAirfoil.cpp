@@ -506,7 +506,7 @@ int main(int argc, char *argv[]) {
     {
 
         double t_0 = 0.0;
-
+        Eigen::VectorXd K_pc = Eigen::VectorXd::Zero(settings.Ns);
         std::vector<double> t_st_vec(settings.Ns);
         t_st_vec[0] = t_0;
 
@@ -530,7 +530,8 @@ int main(int argc, char *argv[]) {
         Eigen::MatrixXd Coefs( 3*settings.Ns, settings.Ns );
         Eigen::MatrixXd Phi = RDMD_modes_coefs ( sn_set,
                                                 Coefs,
-                                                lambda,     
+                                                lambda,
+                                                K_pc,     
                                                 settings.r,
                                                 settings.r_RDMD,
                                                 settings.En );

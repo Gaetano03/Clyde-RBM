@@ -27,7 +27,8 @@ Eigen::MatrixXd Reconstruction_S_POD ( const std::vector<double> &t_vec,
                                 const Eigen::MatrixXd &Coeffs,
                                 const Eigen::MatrixXd &phi,
                                 const double time,
-                                const double En,
+                                // const double En,
+                                int Nrec,
                                 std::string flag_prob = "VELOCITY-2D",
                                 std::string flag_interp = "LINEAR");
 
