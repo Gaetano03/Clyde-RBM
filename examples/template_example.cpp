@@ -77,12 +77,17 @@ int main(int argc, char *argv[]) {
         std::cout << "Number of non-zero modes : " << Phi.cols() << std::endl;
 
         int Nrec; 
-        if ( settings.r == -1 )
+        if ( settings.r == 0 )
+        {    
             Nrec = Nmod( settings.En, K_pc);
+            std::cout << "Number of modes for the desired energy content : " << Nrec << std::endl;
+        }
         else
+        {
             Nrec = settings.r;
+            std::cout << " Number of modes (fixed) : " << Nrec << std::endl;
+        }
 
-        std::cout << "Number of modes for the desired energy content : " << Nrec << std::endl;
 
         if ( settings.flag_wdb_be == "YES" )
         {
@@ -109,7 +114,7 @@ int main(int argc, char *argv[]) {
                 Eigen::MatrixXd Rec = Reconstruction_S_POD ( t_vec,
                                     K_pc, lambda, eig_vec.transpose(),
                                     Phi, settings.t_rec[nt],
-                                    settings.En,
+                                    Nrec,
                                     settings.flag_prob,
                                     settings.flag_interp ) ;
 
