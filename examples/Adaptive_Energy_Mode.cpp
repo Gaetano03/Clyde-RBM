@@ -1,3 +1,12 @@
+/*
+CODE FOR COMPARATIVE (Qualitative-Quantitative) STUDY OF DIFFERENT TECHNIQUES
+Code for computing error 2 norm and error in projection for each RBM (POD, SPOD, DMD, RDMD)
+For each method also the reconstructed field can be computed at the desired time instants 
+(view config file)
+the error and the reconstruction are computed selecting modes based on energy content or user defined rank 
+(rank equal to 0 or Nm respectively, see config file)
+*/
+
 #include "Extract_Basis.hpp"
 #include "read_Inputs.hpp"
 #include "Generate_snset.hpp"
@@ -8,13 +17,13 @@
 int main( int argc, char *argv[] )
 {
 
-    std::cout << "-----------RBM-Clyde error surface calculation starts-------------" << std::endl << std::endl;
+    std::cout << "-----------RBM-Clyde comparative study starts-------------" << std::endl << std::endl;
     
     std::cout << "Initializing common variables ... " << std::endl << std::endl;
     prob_settings settings;
     std::string filecfg = argv[1];
     Read_cfg( filecfg, settings );
-    int s_Nf = 5;   //Number of values for the SPOD filter
+    int s_Nf = 5;   //Number of values for the SPOD filter (POD included)
     std::vector<int> Nf(s_Nf);
     Nf[0] = 0;
     Nf[1] = std::ceil(settings.Ns/10.0);
@@ -535,13 +544,12 @@ int main( int argc, char *argv[] )
 
                 std::cout << "Done" << std::endl;
 
-                if ( settings.flag_mean == "YES" )
-                {
 
-                    for ( int i = 0; i < Rec.cols(); i++)
-                        Rec.col(i) = Rec.col(i) + mean.segment(i*Nr, Nr);
 
-                }
+                for ( int i = 0; i < Rec.cols(); i++)
+                    Rec.col(i) = Rec.col(i) + mean.segment(i*Nr, Nr);
+
+                
 
                 std::cout << "Writing reconstructed field ..." << "\t";
 
@@ -607,7 +615,7 @@ int main( int argc, char *argv[] )
 
     datafile.close();
 
-    std::cout << "RBM-Clyde error surface calculation ends" << std::endl << std::endl;
+    std::cout << "RBM-Clyde Comparative study ends" << std::endl << std::endl;
 
     return 0;
 

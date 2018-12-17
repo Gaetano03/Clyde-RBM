@@ -658,6 +658,8 @@ Eigen::MatrixXd read_err_j ( std::string filename, int Ns )
 
         }
 
+        file_data.close();
+
         return Err_map;
 
 }
