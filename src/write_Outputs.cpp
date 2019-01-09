@@ -691,7 +691,7 @@ void write_Reconstructed_fields ( Eigen::MatrixXd Rec,
         flow_data << Recx << " ";
         Recy = "\"Rec_y\""; 
         flow_data << Recy << " ";
-        Recy = "\"Rec_z\""; 
+        Recz = "\"Rec_z\""; 
         flow_data << Recz << " ";
         flow_data << std::endl;
 

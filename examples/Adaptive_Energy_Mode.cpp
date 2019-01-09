@@ -5,6 +5,9 @@ For each method also the reconstructed field can be computed at the desired time
 (view config file)
 the error and the reconstruction are computed selecting modes based on energy content or user defined rank 
 (rank equal to 0 or Nm respectively, see config file)
+INPUT ARGUMENTS 
+Config File ( if you need to perform RDMD on the run)
+COnfig File, ModesRDMD, CoefsRDMD, EnRDMD (if RDMD information are available)
 */
 
 #include "Extract_Basis.hpp"
@@ -424,7 +427,7 @@ int main( int argc, char *argv[] )
                                     Coefs,
                                     lambda,
                                     K_pc,     
-                                    settings.r,
+                                    -1,
                                     settings.r_RDMD,
                                     settings.En );
             
