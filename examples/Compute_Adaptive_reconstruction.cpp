@@ -1,3 +1,8 @@
+/*
+OLD CODE for adaptive reconstruction, see now Adaptive_reconstruction
+*/
+
+
 #include "Extract_Basis.hpp"
 #include "read_Inputs.hpp"
 #include "Generate_snset.hpp"

@@ -1,6 +1,7 @@
 /*
 Code for adaptive reconstruction
-Input config file + error file
+Input config file + error file (+ Modes,Coefs and Encontent RDMD if already available)
+
 Output reconstructed field at the desired time instants with the adaptive technique
 */
 

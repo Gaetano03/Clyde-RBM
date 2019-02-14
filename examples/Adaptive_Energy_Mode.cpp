@@ -26,13 +26,17 @@ int main( int argc, char *argv[] )
     prob_settings settings;
     std::string filecfg = argv[1];
     Read_cfg( filecfg, settings );
-    int s_Nf = 5;   //Number of values for the SPOD filter (POD included)
+    int s_Nf = settings.Ns + 1;   //Number of values for the SPOD filter (POD included)
     std::vector<int> Nf(s_Nf);
-    Nf[0] = 0;
-    Nf[1] = std::ceil(settings.Ns/10.0);
-    Nf[2] = std::ceil(settings.Ns/2.0);
-    Nf[3] = std::ceil(2.0*settings.Ns/3.0);
-    Nf[4] = settings.Ns;
+    // Nf[0] = 0;
+    // Nf[1] = std::ceil(settings.Ns/10.0);
+    // Nf[2] = std::ceil(settings.Ns/2.0);
+    // Nf[3] = std::ceil(2.0*settings.Ns/3.0);
+    // Nf[4] = settings.Ns;
+
+    for ( int i = 0; i < s_Nf; i ++)
+        Nf[i] = i;
+
     std::vector<Eigen::VectorXd> Err_RBM_Nm_time;
     std::vector<Eigen::VectorXd> ErrP_RBM_Nm_time;
     std::vector<Eigen::VectorXd> EN;
@@ -100,14 +104,14 @@ int main( int argc, char *argv[] )
         {
 
             std::cout << "Extracting SPOD " << Nf[nfj] << " basis ... " << "\t";        
- 
+
             Eigen::MatrixXd Phi = SPOD_basis( sn_set,
                                     lambda, K_pc, eig_vec,
                                     Nf[nfj],
                                     settings.flag_bc, 
                                     settings.flag_filter,  
                                     settings.sigma);
-
+            
             std::cout << " Done! " << std::endl;            
 
             if ( settings.r == 0 )
@@ -181,6 +185,37 @@ int main( int argc, char *argv[] )
             EN.push_back(K_pc);
 
             std::cout << "Done" << std::endl;
+
+            if ( settings.flag_wdb_be == "YES" )
+            {
+
+                std::cout << "Writing modes ..." << "\t";
+                std::string filename = "Modes_sPOD" + std::to_string(settings.Nf) + ".dat";
+                std::ofstream flow_data;
+                flow_data.open(filename.c_str());
+                std::string phi;
+
+                for ( int i = 0; i < Phi.cols(); i++ )
+                {
+                    phi = "\"Phi_" + std::to_string(i+1) + "\""; 
+                    flow_data << phi << " ";
+                }
+
+                flow_data << std::endl;
+
+                //Write fields
+                for ( int i = 0; i < Nr; i++ )
+                {
+                    for (int j = 0; j < Phi.cols(); j++)
+                        flow_data << std::setprecision(12) << std::scientific << Phi(i,j) <<  " ";           
+
+                flow_data << std::endl;
+                }
+                // Close file
+                flow_data.close();
+
+            }
+
 
             if ( settings.flag_rec == "YES" )
             {

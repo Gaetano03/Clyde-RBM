@@ -30,3 +30,6 @@ target_link_libraries (Adaptive_Energy_Mode clyde-rbm ${MANDATORY_LIBRARIES})
 
 add_executable (Adaptive_reconstruction Adaptive_reconstruction.cpp)
 target_link_libraries (Adaptive_reconstruction clyde-rbm ${MANDATORY_LIBRARIES})
+
+add_executable (RBM_initial_condition RBM_initial_condition.cpp)
+target_link_libraries (RBM_initial_condition clyde-rbm ${MANDATORY_LIBRARIES})
