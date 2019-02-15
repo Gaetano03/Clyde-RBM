@@ -1,6 +1,6 @@
 /*
 CODE FOR COMPARATIVE (Qualitative-Quantitative) STUDY OF DIFFERENT TECHNIQUES
-Code for computing error 2 norm and error in projection for each RBM (POD, SPOD, DMD, RDMD) outside the training points
+Code for computing error 2 norm and error in projection for each RBM (POD, SPOD, DMD, RDMD) ALSO in the training points
 For each method also the reconstructed field can be computed at the desired time instants 
 (view config file)
 the error and the reconstruction are computed selecting modes based on energy content or user defined rank 
@@ -38,6 +38,7 @@ int main( int argc, char *argv[] )
         Nf[i] = i;
 
     std::vector<Eigen::VectorXd> Err_RBM_Nm_time;
+    std::vector<Eigen::VectorXd> Err_TRBM_Nm_time;
     std::vector<Eigen::VectorXd> ErrP_RBM_Nm_time;
     std::vector<Eigen::VectorXd> EN;
 
@@ -71,6 +72,7 @@ int main( int argc, char *argv[] )
 
 
     Eigen::VectorXd norm_sn_set = Eigen::VectorXd::Zero(settings.Ns-1);
+    Eigen::VectorXd norm_snt_set = Eigen::VectorXd::Zero(settings.Ns);
 
     std::cout << "Reading matrix for check ... " << std::endl;
     Eigen::MatrixXd sn_set_check = generate_snap_matrix( Nr, settings.Ns-1, settings.Ds, settings.nstart + settings.Ds/2,
@@ -83,6 +85,11 @@ int main( int argc, char *argv[] )
     for ( int i = 0; i < settings.Ns-1; i ++ )
     {
         norm_sn_set(i) = sn_set_check.col(i).norm();
+    }
+
+    for ( int i = 0; i < settings.Ns; i ++ )
+    {
+        norm_snt_set(i) = sn_set.col(i).norm();
     }
 
     Eigen::VectorXd svd_cum_sum(settings.Ns);
@@ -149,13 +156,18 @@ int main( int argc, char *argv[] )
 
             Eigen::MatrixXd Err_SPOD_map = Eigen::MatrixXd::Zero( sn_set.rows(), sn_set_check.cols() );
             Eigen::MatrixXd Err_PSPOD_map = Eigen::MatrixXd::Zero( sn_set.rows(), sn_set_check.cols() );
+            Eigen::MatrixXd Err_TSPOD_map = Eigen::MatrixXd::Zero( sn_set.rows(), sn_set.cols() );
             Eigen::VectorXd Err_SPOD_Nm_time = Eigen::VectorXd::Zero(settings.Ns-1);
+            Eigen::VectorXd Err_TSPOD_Nm_time = Eigen::VectorXd::Zero(settings.Ns);
             Eigen::VectorXd J_SPOD_Nm_time = Eigen::VectorXd::Zero(settings.Ns-1);
             
+
             Err_SPOD_map = sn_set_check - Phi.leftCols(Nm)*Sig*coef_t.transpose();
+            Err_TSPOD_map = sn_set - Phi.leftCols(Nm)*Sig*eig_vec.leftCols(Nm).transpose();
 
             Eigen::MatrixXd PhiTPhi = Phi.leftCols(Nm).transpose()*Phi.leftCols(Nm);
             Eigen::MatrixXd dumCoefs = Phi.leftCols(Nm).transpose()*sn_set_check;
+
 
             Err_PSPOD_map = sn_set_check - Phi.leftCols(Nm)*(PhiTPhi.inverse()*dumCoefs);
             
@@ -173,15 +185,17 @@ int main( int argc, char *argv[] )
                 {
                     Err_SPOD_Nm_time(i) += Err_SPOD_map(j,i)*Err_SPOD_map(j,i);
                     J_SPOD_Nm_time(i) += Err_PSPOD_map(j,i)*Err_PSPOD_map(j,i);
+                    Err_TSPOD_Nm_time(i) += Err_TSPOD_map(j,i)*Err_TSPOD_map(j,i);
                 }
                 
                 Err_SPOD_Nm_time(i) = std::sqrt(Err_SPOD_Nm_time(i))/norm_sn_set(i);
                 J_SPOD_Nm_time(i) = std::sqrt(J_SPOD_Nm_time(i))/norm_sn_set(i);
-            
+                Err_TSPOD_Nm_time(i) = std::sqrt(Err_TSPOD_Nm_time(i))/norm_snt_set(i);
             }     
 
             Err_RBM_Nm_time.push_back(Err_SPOD_Nm_time);
             ErrP_RBM_Nm_time.push_back(J_SPOD_Nm_time);
+            Err_TRBM_Nm_time.push_back(Err_TSPOD_Nm_time);
             EN.push_back(K_pc);
 
             std::cout << "Done" << std::endl;
@@ -350,24 +364,39 @@ int main( int argc, char *argv[] )
         
         std::cout << "Computing error of DMD and error from projection ... " << std::endl << std::endl;
 
-        Eigen::MatrixXcd V_and(lambda_DMD.size(), settings.Ns-1);      
+        Eigen::MatrixXcd V_and(lambda_DMD.size(), settings.Ns-1);
+        Eigen::MatrixXcd V_andT(lambda_DMD.size(), settings.Ns);
         for ( int i = 0; i < lambda_DMD.size(); i++ )
         {
             for ( int j = 0; j < settings.Ns-1; j++ )
-                V_and(i,j) = std::pow(lambda_DMD(i), (double)j + 0.5);                                                                                         
+            {
+                V_and(i,j) = std::pow(lambda_DMD(i), (double)j + 0.5);
+                V_andT(i,j) = std::pow(lambda_DMD(i), (double)j);                                                                                        
+            }
+            V_andT(i,settings.Ns-1) = std::pow(lambda_DMD(i), (double)(settings.Ns-1));
         }        
         Eigen::MatrixXcd Psi = Eigen::MatrixXcd::Zero(alfa.size(), settings.Ns-1);
+        Eigen::MatrixXcd PsiT = Eigen::MatrixXcd::Zero(alfa.size(), settings.Ns);
         for ( int i = 0; i < settings.Ns-1; i++ )
+        {    
             Psi.col(i) = alfa.cwiseProduct(V_and.col(i));
-  
+            PsiT.col(i) = alfa.cwiseProduct(V_andT.col(i));
+        }
+        
+        PsiT.col(settings.Ns-1) = alfa.cwiseProduct(V_andT.col(settings.Ns-1));
+
         Eigen::MatrixXd Err_DMD_map(sn_set.rows(), sn_set_check.cols());
         Eigen::MatrixXd Err_PDMD_map(sn_set.rows(), sn_set_check.cols());
+        Eigen::MatrixXd Err_TDMD_map(sn_set.rows(), sn_set.cols());
         Eigen::VectorXd Err_DMD_Nm_time = Eigen::VectorXd::Zero(settings.Ns-1);
+        Eigen::VectorXd Err_TDMD_Nm_time = Eigen::VectorXd::Zero(settings.Ns);
         Eigen::VectorXd J_DMD_Nm_time = Eigen::VectorXd::Zero(settings.Ns-1);
 
 
         Eigen::MatrixXcd D_dmd = Phi.leftCols(Nm)*Psi.topRows(Nm);
         Err_DMD_map = sn_set_check - D_dmd.real();
+        Eigen::MatrixXcd D_dmdT = Phi.leftCols(Nm)*PsiT.topRows(Nm);
+        Err_TDMD_map = sn_set - D_dmdT.real();
 
         Eigen::MatrixXcd PhiTPhi = Phi.leftCols(Nm).transpose()*Phi.leftCols(Nm);
         Eigen::MatrixXcd dumCoefs = Phi.leftCols(Nm).transpose()*sn_set_check;
@@ -530,12 +559,15 @@ int main( int argc, char *argv[] )
         std::cout << "Computing error RDMD and error from projection ... " << std::endl << std::endl;
         Eigen::MatrixXd Err_RDMD_map;
         Eigen::MatrixXd Err_PRDMD_map;
+        Eigen::MatrixXd Err_TRDMD_map;
         Eigen::VectorXd Err_RDMD_Nm_time = Eigen::VectorXd::Zero(settings.Ns-1);
+        Eigen::VectorXd Err_TRDMD_Nm_time = Eigen::VectorXd::Zero(settings.Ns);
         Eigen::VectorXd J_RDMD_Nm_time = Eigen::VectorXd::Zero(settings.Ns-1);
 
  
         // Err_RDMD_map = sn_set_check - Phi.leftCols(Nm)*coef_t.transpose();
         Err_RDMD_map = sn_set_check - Phi.leftCols(Nm)*coef_t.transpose();
+        Err_TRDMD_map = sn_set - Phi.leftCols(Nm)*Coefs.topRows(Nm).transpose();
         Err_PRDMD_map = sn_set_check - Phi.leftCols(Nm)*(Phi.leftCols(Nm).transpose()*sn_set_check);
 
         // for ( int i = 0; i < Err_RDMD_map.cols(); i++ )
@@ -552,15 +584,19 @@ int main( int argc, char *argv[] )
             {
                 Err_RDMD_Nm_time(i) += Err_RDMD_map(j,i)*Err_RDMD_map(j,i);
                 J_RDMD_Nm_time(i) += Err_PRDMD_map(j,i)*Err_PRDMD_map(j,i);
+                Err_TRDMD_Nm_time(i) += Err_TRDMD_map(j,i)*Err_TRDMD_map(j,i);
 
             }
 
             Err_RDMD_Nm_time(i) = std::sqrt(Err_RDMD_Nm_time(i))/norm_sn_set(i);
             J_RDMD_Nm_time(i) = std::sqrt(J_RDMD_Nm_time(i))/norm_sn_set(i);
+            Err_TRDMD_Nm_time(i) = std::sqrt(Err_TRDMD_Nm_time(i))/norm_snt_set(i);
         }
  
         Err_RBM_Nm_time.push_back(Err_RDMD_Nm_time);
+        Err_TRBM_Nm_time.push_back(Err_TRDMD_Nm_time);
         ErrP_RBM_Nm_time.push_back(J_RDMD_Nm_time);
+
         EN.push_back(K_pc);
 
         if ( settings.flag_rec == "YES" )
@@ -621,6 +657,21 @@ int main( int argc, char *argv[] )
     }
 
     errfile.close();
+
+    std::ofstream errTfile;
+    errTfile.open("Err_TRBM.dat");
+
+    for ( int nm = 0; nm < settings.Ns; nm ++ )    
+    {
+        for( int j = 0; j < Err_TRBM_Nm_time.size(); j++ ) 
+            errTfile <<  std::setprecision(8) << Err_TRBM_Nm_time[j](nm) << "\t";
+
+        errTfile << std::endl;
+
+    }
+
+    errTfile.close();
+
 
     std::ofstream errp;
     errp.open("ErrP_RBM.dat");

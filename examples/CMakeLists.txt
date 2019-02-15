@@ -28,6 +28,9 @@ target_link_libraries (Compute_error_out_of_T clyde-rbm ${MANDATORY_LIBRARIES})
 add_executable (Adaptive_Energy_Mode Adaptive_Energy_Mode.cpp)
 target_link_libraries (Adaptive_Energy_Mode clyde-rbm ${MANDATORY_LIBRARIES})
 
+add_executable (Adaptive_Energy_Mode2 Adaptive_Energy_Mode2.cpp)
+target_link_libraries (Adaptive_Energy_Mode2 clyde-rbm ${MANDATORY_LIBRARIES})
+
 add_executable (Adaptive_reconstruction Adaptive_reconstruction.cpp)
 target_link_libraries (Adaptive_reconstruction clyde-rbm ${MANDATORY_LIBRARIES})
 
