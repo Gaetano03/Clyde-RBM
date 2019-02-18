@@ -35,8 +35,8 @@ int main( int argc, char *argv[] )
     Nf[3] = std::ceil(2.0*settings.Ns/3.0);
     Nf[4] = settings.Ns;
 
-    for ( int i = 0; i < s_Nf; i ++)
-        Nf[i] = i;
+    // for ( int i = 0; i < s_Nf; i ++)
+    //     Nf[i] = i;
 
     std::vector<Eigen::VectorXd> Err_RBM_Nm_time;
     std::vector<Eigen::VectorXd> Err_TRBM_Nm_time;
@@ -412,14 +412,16 @@ int main( int argc, char *argv[] )
             { 
                 Err_DMD_Nm_time(i) += Err_DMD_map(j,i)*Err_DMD_map(j,i);
                 J_DMD_Nm_time(i) += Err_PDMD_map(j,i)*Err_PDMD_map(j,i);
+                Err_TDMD_Nm_time(i) += Err_TDMD_map(j,i)*Err_TDMD_map(j,i);
             }
 
             Err_DMD_Nm_time(i) = std::sqrt(Err_DMD_Nm_time(i))/norm_sn_set(i);
             J_DMD_Nm_time(i) = std::sqrt(J_DMD_Nm_time(i))/norm_sn_set(i);
-
+            Err_TDMD_Nm_time(i) = std::sqrt(Err_TDMD_Nm_time(i))/norm_snt_set(i);
         }
 
         Err_RBM_Nm_time.push_back(Err_DMD_Nm_time);
+        Err_TRBM_Nm_time.push_back(Err_TDMD_Nm_time);
         ErrP_RBM_Nm_time.push_back(J_DMD_Nm_time);
         EN.push_back(K_pc);
         std::cout << "Done" << std::endl;
@@ -568,7 +570,7 @@ int main( int argc, char *argv[] )
  
         // Err_RDMD_map = sn_set_check - Phi.leftCols(Nm)*coef_t.transpose();
         Err_RDMD_map = sn_set_check - Phi.leftCols(Nm)*coef_t.transpose();
-        Err_TRDMD_map = sn_set - Phi.leftCols(Nm)*Coefs.topRows(Nm).transpose();
+        Err_TRDMD_map = sn_set - Phi.leftCols(Nm)*Coefs.topRows(Nm);
         Err_PRDMD_map = sn_set_check - Phi.leftCols(Nm)*(Phi.leftCols(Nm).transpose()*sn_set_check);
 
         // for ( int i = 0; i < Err_RDMD_map.cols(); i++ )
@@ -661,6 +663,8 @@ int main( int argc, char *argv[] )
 
     std::ofstream errTfile;
     errTfile.open("Err_TRBM.dat");
+
+    std::cout << "Size sytructure training error : " << Err_TRBM_Nm_time.size() << std::endl;
 
     for ( int nm = 0; nm < settings.Ns; nm ++ )    
     {
