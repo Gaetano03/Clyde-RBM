@@ -664,7 +664,7 @@ int main( int argc, char *argv[] )
     std::ofstream errTfile;
     errTfile.open("Err_TRBM.dat");
 
-    std::cout << "Size sytructure training error : " << Err_TRBM_Nm_time.size() << std::endl;
+    // std::cout << "Size sytructure training error : " << Err_TRBM_Nm_time.size() << std::endl;
 
     for ( int nm = 0; nm < settings.Ns; nm ++ )    
     {

@@ -20,8 +20,17 @@ COnfig File, ModesRDMD, CoefsRDMD, EnRDMD (if RDMD information are available)
 int main( int argc, char *argv[] )
 {
 
+    clock_t chrono_begin, chrono_end;
+    double comp_time;
+
+    chrono_begin = clock();
+
+
+
+
     std::cout << "-----------RBM-Clyde comparative study starts-------------" << std::endl << std::endl;
     
+
     std::cout << "Initializing common variables ... " << std::endl << std::endl;
     prob_settings settings;
     std::string filecfg = argv[1];
@@ -654,6 +663,10 @@ int main( int argc, char *argv[] )
     datafile.close();
 
     std::cout << "RBM-Clyde Comparative study ends" << std::endl << std::endl;
+
+    chrono_end = clock();
+    comp_time = ((double)(chrono_end-chrono_begin))/CLOCKS_PER_SEC;
+    std::cout << "Elapsed time : " << comp_time << std::endl;
 
     return 0;
 
