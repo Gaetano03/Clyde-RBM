@@ -35,16 +35,16 @@ int main( int argc, char *argv[] )
     prob_settings settings;
     std::string filecfg = argv[1];
     Read_cfg( filecfg, settings );
-    int s_Nf = settings.Ns + 1;   //Number of values for the SPOD filter (POD included)
+    int s_Nf = 5;   //Number of values for the SPOD filter (POD included)
     std::vector<int> Nf(s_Nf);
-    // Nf[0] = 0;
-    // Nf[1] = std::ceil(settings.Ns/10.0);
-    // Nf[2] = std::ceil(settings.Ns/2.0);
-    // Nf[3] = std::ceil(2.0*settings.Ns/3.0);
-    // Nf[4] = settings.Ns;
+    Nf[0] = 0;
+    Nf[1] = std::ceil(settings.Ns/10.0);
+    Nf[2] = std::ceil(settings.Ns/2.0);
+    Nf[3] = std::ceil(2.0*settings.Ns/3.0);
+    Nf[4] = settings.Ns;
 
-    for ( int i = 0; i < s_Nf; i ++)
-        Nf[i] = i;
+    // for ( int i = 0; i < s_Nf; i ++)
+    //     Nf[i] = i;
 
     std::vector<Eigen::VectorXd> Err_RBM_Nm_time;
     std::vector<Eigen::VectorXd> ErrP_RBM_Nm_time;
